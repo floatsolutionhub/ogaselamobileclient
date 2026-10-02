@@ -1,0 +1,90 @@
+import { Tabs, useRouter } from "expo-router";
+import { Heart, Home, MessageCircle, PlusCircle, User } from "lucide-react-native";
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { useAuth } from "@/context/AuthContext";
+import { colors } from "@/theme/colors";
+
+function useGuardedTabPress(redirect: string) {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  return (e: { preventDefault: () => void }) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      router.push({ pathname: "/(modals)/sign-in", params: { redirect } });
+    }
+  };
+}
+
+export default function AppLayout() {
+  const { registerActivity } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  const guardFavourites = useGuardedTabPress("/(app)/favourites");
+  const guardPost = useGuardedTabPress("/(app)/post");
+  const guardMessages = useGuardedTabPress("/(app)/messages");
+  const guardProfile = useGuardedTabPress("/(app)/profile");
+
+  return (
+    <View className="flex-1" onTouchStart={registerActivity}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.brand600,
+          tabBarInactiveTintColor: colors.ink300,
+          tabBarLabelStyle: { fontFamily: "Poppins_500Medium", fontSize: 11 },
+          tabBarStyle: {
+            borderTopColor: colors.brand50,
+            height: 56 + insets.bottom,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        }}
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="favourites"
+          options={{
+            title: "Favourites",
+            tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+          }}
+          listeners={{ tabPress: guardFavourites }}
+        />
+        <Tabs.Screen
+          name="post"
+          options={{
+            title: "Post",
+            tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} />,
+          }}
+          listeners={{ tabPress: guardPost }}
+        />
+        <Tabs.Screen
+          name="messages"
+          options={{
+            title: "Messages",
+            tabBarIcon: ({ color, size }) => (
+              <MessageCircle color={color} size={size} />
+            ),
+          }}
+          listeners={{ tabPress: guardMessages }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+          }}
+          listeners={{ tabPress: guardProfile }}
+        />
+      </Tabs>
+    </View>
+  );
+}
