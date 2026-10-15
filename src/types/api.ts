@@ -51,6 +51,8 @@ export interface SellerProfileSummary {
     "NotStarted" | "Pending" | "Verified" | "Failed" | "ManualReview";
   verifiedAt: string | null;
   storeAddress?: string | null;
+  /** Null unless staff verified the business - a trust badge, separate from verificationStatus. */
+  businessVerifiedAt?: string | null;
 }
 
 export interface CurrentUser {
@@ -98,6 +100,13 @@ export interface Listing {
   updatedAt: string;
   /** Why a moderator rejected the last submission (the listing is back in Draft); null otherwise. */
   reviewNote?: string | null;
+  /** Used items only: whether the seller has the original receipt. Null for new items. */
+  hasOriginalReceipt?: boolean | null;
+  tikTokUrl?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  /** Played in-app on the ad screen. */
+  youTubeUrl?: string | null;
 }
 
 /** GET /listings/{id} - Listing plus what the ad detail screen needs. seller.phone is null unless signed in. */
@@ -114,6 +123,7 @@ export interface ListingDetail extends Listing {
     storeAddress: string | null;
     verificationStatus: string;
     memberSince: string;
+    isBusinessVerified?: boolean;
   };
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getCategories } from "@/services/categories";
 import type { Category } from "@/types/api";
@@ -32,6 +32,15 @@ export function useCategoryTree() {
     };
   }, []);
 
+  /** Re-fetches in the background (pull to refresh) - the current list stays up meanwhile. */
+  const refresh = useCallback(async () => {
+    try {
+      setCategories(await getCategories());
+    } catch {
+      // Keep what's showing rather than blanking it on a failed refresh.
+    }
+  }, []);
+
   const tree = useMemo<CategoryNode[]>(() => {
     const topLevel = categories.filter((category) => category.parentCategoryId === null);
     return topLevel.map((category) => ({
@@ -40,5 +49,5 @@ export function useCategoryTree() {
     }));
   }, [categories]);
 
-  return { categories, tree, isLoading };
+  return { categories, tree, isLoading, refresh };
 }

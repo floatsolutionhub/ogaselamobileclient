@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ListingCard } from "@/components/ListingCard";
+import { VerifiedBusinessPill } from "@/components/VerifiedBusinessPill";
 import { ApiError } from "@/lib/apiClient";
 import * as listingsService from "@/services/listings";
 import { getSellerProfile, type SellerProfile } from "@/services/sellers";
@@ -84,6 +85,7 @@ export default function SellerProfileScreen() {
               <BadgeCheck size={17} color={colors.brand600} />
             ) : null}
           </View>
+          {profile.isBusinessVerified ? <VerifiedBusinessPill /> : null}
           <Text className="font-poppins text-xs text-ink-500">
             On Ogasela since {moment(profile.memberSince).format("MMM YYYY")}
           </Text>

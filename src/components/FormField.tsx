@@ -1,7 +1,6 @@
-import { LucideIcon } from "lucide-react-native";
+import { Eye, EyeOff, type LucideIcon } from "lucide-react-native";
 import { useState } from "react";
-import { Text, TextInput, TextInputProps, View, Pressable } from "react-native";
-import { Eye, EyeOff } from "lucide-react-native";
+import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
 
 import { colors } from "@/theme/colors";
 
@@ -13,6 +12,8 @@ type FormFieldProps = TextInputProps & {
   secure?: boolean;
   /** Strips anything that isn't 0-9 as the user types or pastes (e.g. phone numbers). */
   digitsOnly?: boolean;
+  /** Overrides the label's text style, e.g. a bigger, bolder label on the Post an ad form. */
+  labelClassName?: string;
 };
 
 export function FormField({
@@ -22,6 +23,7 @@ export function FormField({
   touched,
   secure,
   digitsOnly,
+  labelClassName = "mb-1.5 font-poppins-medium text-sm text-ink-700",
   ...inputProps
 }: FormFieldProps) {
   const [hidden, setHidden] = useState(!!secure);
@@ -29,9 +31,7 @@ export function FormField({
 
   return (
     <View className="mb-4">
-      <Text className="mb-1.5 font-poppins-medium text-sm text-ink-700">
-        {label}
-      </Text>
+      <Text className={labelClassName}>{label}</Text>
       <View
         className={`flex-row items-center rounded-2xl border bg-surface px-4 ${
           showError ? "border-danger" : "border-brand-100"

@@ -1,4 +1,13 @@
-import { Building2, FileBadge, MapPin, Receipt, Store } from "lucide-react-native";
+import {
+  BadgeCheck,
+  Building2,
+  Clock,
+  FileBadge,
+  FileWarning,
+  MapPin,
+  Receipt,
+  Store,
+} from "lucide-react-native";
 import moment from "moment";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
@@ -6,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { ChangeRequestBanner } from "@/components/ChangeRequestBanner";
+import { DocumentDetailSheet } from "@/components/DocumentDetailSheet";
 import { DocumentRow } from "@/components/DocumentRow";
 import { DocumentUploadSheet } from "@/components/DocumentUploadSheet";
 import { FormField } from "@/components/FormField";
@@ -37,6 +47,10 @@ export default function BusinessInfoScreen() {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<UserDocumentType | null>(null);
+  const [viewing, setViewing] = useState<{
+    document: UserDocument;
+    title: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const [changes, docs] = await Promise.all([
@@ -112,6 +126,40 @@ export default function BusinessInfoScreen() {
   const fileSubtitle = (d: UserDocument) =>
     `${d.fileName} · ${moment(d.createdAt).format("D MMM YYYY")}`;
 
+  // Once the business is verified its documents are locked: they open read-only.
+  const isBusinessVerified = !!user?.sellerProfile?.businessVerifiedAt;
+  // A rejected upload has to be replaced, so it counts as missing.
+  const hasUpload = (type: UserDocumentType) => {
+    const document = latest(type);
+    return !!document && document.status !== "Rejected";
+  };
+  const missingDocuments = [
+    !hasUpload("BusinessRegistration") && "business registration",
+    !hasUpload("OfficeUtilityBill") && "proof of office address",
+  ].filter(Boolean);
+  const status = isBusinessVerified
+    ? {
+        Icon: BadgeCheck,
+        text: "Business verified - buyers see a verified business badge on your shop and ads.",
+        tone: "brand",
+      }
+    : missingDocuments.length > 0
+      ? {
+          Icon: FileWarning,
+          text: `Awaiting ${missingDocuments.join(" and ")} upload`,
+          tone: "gold",
+        }
+      : { Icon: Clock, text: "Pending approval", tone: "brand" };
+
+  const openDocument = (type: UserDocumentType, title: string) => {
+    if (!isBusinessVerified) {
+      setUploading(type);
+      return;
+    }
+    const document = latest(type);
+    if (document) setViewing({ document, title });
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScreenHeader title="Business Info" />
@@ -120,6 +168,24 @@ export default function BusinessInfoScreen() {
         contentContainerStyle={{ padding: 24, paddingTop: 12, gap: 20 }}
         keyboardShouldPersistTaps="handled"
       >
+        {loading ? null : (
+          <View
+            className={`flex-row items-center gap-2 rounded-2xl border px-4 py-3 ${
+              status.tone === "gold"
+                ? "border-gold-200 bg-gold-50"
+                : "border-brand-100 bg-brand-50"
+            }`}
+          >
+            <status.Icon
+              size={18}
+              color={status.tone === "gold" ? colors.gold700 : colors.brand600}
+            />
+            <Text className="flex-shrink font-poppins-medium text-xs text-ink-900">
+              {status.text}
+            </Text>
+          </View>
+        )}
+
         <ChangeRequestBanner
           change={change}
           pendingText={
@@ -181,8 +247,9 @@ export default function BusinessInfoScreen() {
                 Business documents
               </Text>
               <Text className="mt-0.5 font-poppins text-xs text-ink-500">
-                Upload your registration document and proof of your office
-                address. Our team reviews them.
+                {isBusinessVerified
+                  ? "Verified - tap a document to view it."
+                  : "Upload your registration document and proof of your office address. Our team reviews them."}
               </Text>
             </View>
           </View>
@@ -198,14 +265,18 @@ export default function BusinessInfoScreen() {
                 title="Business registration"
                 document={latest("BusinessRegistration")}
                 subtitleFor={fileSubtitle}
-                onPress={() => setUploading("BusinessRegistration")}
+                onPress={() =>
+                  openDocument("BusinessRegistration", "Business registration")
+                }
               />
               <DocumentRow
                 icon={Receipt}
                 title="Proof of office address"
                 document={latest("OfficeUtilityBill")}
                 subtitleFor={fileSubtitle}
-                onPress={() => setUploading("OfficeUtilityBill")}
+                onPress={() =>
+                  openDocument("OfficeUtilityBill", "Proof of office address")
+                }
                 last
               />
             </>
@@ -217,6 +288,12 @@ export default function BusinessInfoScreen() {
         type={uploading}
         onClose={() => setUploading(null)}
         onUploaded={(document) => setDocuments((prev) => [document, ...prev])}
+      />
+      <DocumentDetailSheet
+        document={viewing?.document ?? null}
+        title={viewing?.title ?? ""}
+        lockNote="Your business is verified, so this can no longer be changed."
+        onClose={() => setViewing(null)}
       />
     </SafeAreaView>
   );

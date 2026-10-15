@@ -31,25 +31,32 @@ export function FavouritesProvider({
 
   useEffect(() => {
     (async () => {
-      const raw = await AsyncStorage.getItem(FAVOURITES_KEY);
-      if (raw) setFavouriteIds(JSON.parse(raw) as string[]);
+      try {
+        const raw = await AsyncStorage.getItem(FAVOURITES_KEY);
+        const parsed: unknown = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed)) setFavouriteIds(parsed as string[]);
+      } catch {
+        // Unreadable storage - start with no favourites rather than crash on launch.
+      }
     })();
   }, []);
 
-  const toggleFavourite = useCallback((listingId: string) => {
-    setFavouriteIds((prev) => {
-      const adding = !prev.includes(listingId);
+  const toggleFavourite = useCallback(
+    (listingId: string) => {
+      const adding = !favouriteIds.includes(listingId);
       const next = adding
-        ? [...prev, listingId]
-        : prev.filter((id) => id !== listingId);
-      // Saves feed the seller's analytics (favourites themselves live only on this device).
-      if (adding) recordEngagement(listingId, "Save");
+        ? [...favouriteIds, listingId]
+        : favouriteIds.filter((id) => id !== listingId);
+      setFavouriteIds(next);
       AsyncStorage.setItem(FAVOURITES_KEY, JSON.stringify(next)).catch(
         () => {},
       );
-      return next;
-    });
-  }, []);
+      // Saves feed the seller's analytics (favourites themselves live only on this device).
+      // Outside the state update: React may run an updater twice, which would record it twice.
+      if (adding) recordEngagement(listingId, "Save");
+    },
+    [favouriteIds],
+  );
 
   const isFavourite = useCallback(
     (listingId: string) => favouriteIds.includes(listingId),

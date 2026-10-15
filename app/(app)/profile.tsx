@@ -30,7 +30,9 @@ import Toast from "react-native-toast-message";
 
 import { GradientScreen } from "@/components/GradientScreen";
 import { useAuth } from "@/context/AuthContext";
+import { VerificationStatusPill } from "@/components/VerificationStatusPill";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import { ApiError } from "@/lib/apiClient";
 import * as walletService from "@/services/wallet";
 import { colors } from "@/theme/colors";
@@ -56,6 +58,7 @@ const MENU_ITEMS = [
 export default function ProfileScreen() {
   useProtectedRoute("/(app)/profile");
   const { user, logout } = useAuth();
+  const { overview: verification } = useVerificationOverview();
   const router = useRouter();
 
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -163,6 +166,10 @@ export default function ProfileScreen() {
       WebBrowser.openBrowserAsync(LINKS.terms);
       return;
     }
+    if (label === "Help & support") {
+      WebBrowser.openBrowserAsync(LINKS.contact);
+      return;
+    }
     Toast.show({ type: "info", text1: label, text2: "Coming soon" });
   };
 
@@ -204,6 +211,25 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </View>
+
+          {verification ? (
+            <View className="mt-3 flex-row flex-wrap justify-center gap-2">
+              <VerificationStatusPill
+                label="Account"
+                status={verification.personal.status}
+                onPress={() => router.push("/personal-info")}
+              />
+              <VerificationStatusPill
+                label="Business"
+                status={verification.business?.status ?? null}
+                onPress={
+                  verification.business
+                    ? () => router.push("/business-info")
+                    : undefined
+                }
+              />
+            </View>
+          ) : null}
         </View>
 
         <View className="mt-6 flex-row rounded-3xl border border-brand-50 bg-white p-2">
@@ -223,7 +249,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <View className="mt-6 rounded-3xl border border-brand-50 bg-white p-6">
+        {/* <View className="mt-6 rounded-3xl border border-brand-50 bg-white p-6">
           <View className="flex-row items-center gap-2">
             <WalletIcon size={16} color={colors.brand600} />
             <Text className="font-poppins-semibold text-sm text-ink-500">
@@ -269,7 +295,7 @@ export default function ProfileScreen() {
               )}
             </Pressable>
           </View>
-        </View>
+        </View> */}
 
         <View className="mt-6 overflow-hidden rounded-3xl border border-brand-50 bg-white">
           {MENU_ITEMS.map((item, index) => (

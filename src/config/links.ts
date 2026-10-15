@@ -3,4 +3,5 @@ export const LINKS = {
   terms: "https://ogasela.com/terms-and-conditions",
   privacy: "https://ogasela.com/privacy-policy",
   accountDeletion: "https://ogasela.com/account-deletion",
+  contact: "https://ogasela.com/contact",
 } as const;

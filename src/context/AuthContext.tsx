@@ -11,7 +11,7 @@ import { AppState, AppStateStatus } from "react-native";
 import Toast from "react-native-toast-message";
 
 import { env } from "@/config/env";
-import { getAccessToken, setAccessToken, setUnauthorizedHandler } from "@/lib/apiClient";
+import { ApiError, getAccessToken, setAccessToken, setUnauthorizedHandler } from "@/lib/apiClient";
 import * as tokenStorage from "@/lib/tokenStorage";
 import * as authService from "@/services/auth";
 import type { LoginOtpSentResponse } from "@/services/auth";
@@ -66,6 +66,11 @@ async function persistTokens(accessToken: string, refreshToken: string): Promise
   setAccessToken(accessToken);
 }
 
+/** The server said no to this session - as opposed to the request never getting an answer. */
+function isSessionRejected(error: unknown): boolean {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500;
+}
+
 async function clearTokens(): Promise<void> {
   // Even on native, a keychain/keystore write can fail for reasons outside our control - either
   // way, failing to clear the stored token shouldn't crash whatever caused this (an
@@ -113,9 +118,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const tokens = await authService.refresh(storedRefreshToken);
         await persistTokens(tokens.accessToken, tokens.refreshToken);
         return true;
-      } catch {
-        await clearTokens();
-        setUser(null);
+      } catch (error) {
+        // Only a refresh the server actually rejected ends the session - a dropped connection
+        // mid-refresh shouldn't sign the user out.
+        if (isSessionRejected(error)) {
+          await clearTokens();
+          setUser(null);
+        }
         return false;
       }
     });
@@ -132,10 +141,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccessToken(accessToken);
         const me = await meService.getCurrentUser();
         setUser(me);
-      } catch {
-        // Access token expired and refresh (via the 401 handler above) also failed, or there
-        // was no session at all - either way, start signed out rather than stuck loading.
-        await clearTokens();
+      } catch (error) {
+        // Access token expired and refresh (via the 401 handler above) also failed - start
+        // signed out rather than stuck loading. Opening the app offline isn't that: keep the
+        // tokens so the next launch with a connection is still signed in.
+        if (isSessionRejected(error)) await clearTokens();
+        else setAccessToken(null);
       } finally {
         setIsLoading(false);
       }

@@ -33,22 +33,61 @@ export function setUnauthorizedHandler(handler: (() => Promise<boolean>) | null)
   unauthorizedHandler = handler;
 }
 
+/**
+ * Several calls usually 401 together (a screen loading three things at once with an expired
+ * token). They all wait on this one refresh instead of each sending the same refresh token - the
+ * API rotates it, so every refresh after the first would fail and sign the user out.
+ */
+let pendingRefresh: Promise<boolean> | null = null;
+
+function refreshOnce(): Promise<boolean> {
+  if (!unauthorizedHandler) return Promise.resolve(false);
+  pendingRefresh ??= unauthorizedHandler()
+    .catch(() => false)
+    .finally(() => {
+      pendingRefresh = null;
+    });
+  return pendingRefresh;
+}
+
+/** A call that never answers (bad signal, server stuck) fails after this instead of leaving its spinner up forever. */
+const TIMEOUT_MS = 30_000;
+/** Uploads send several MB over mobile data. */
+const UPLOAD_TIMEOUT_MS = 120_000;
+
 async function request<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
   const headers = new Headers(options.headers);
+  const isForm = options.body instanceof FormData;
   // FormData bodies (image uploads) must NOT get an explicit Content-Type - fetch sets its own
   // multipart boundary automatically, and overriding it here would break parsing server-side.
-  if (options.body && !(options.body instanceof FormData)) {
+  if (options.body && !isForm) {
     headers.set("Content-Type", "application/json");
   }
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), isForm ? UPLOAD_TIMEOUT_MS : TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, { ...options, headers, signal: controller.signal });
+  } catch {
+    throw new ApiError(
+      0,
+      controller.signal.aborted
+        ? "This is taking too long. Check your connection and try again."
+        : "Couldn't reach Ogasela. Check your internet connection and try again.",
+      "Network",
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 
-  if (response.status === 401 && !isRetry && unauthorizedHandler) {
-    const refreshed = await unauthorizedHandler();
-    if (refreshed) {
+  // Never for /auth/* itself: a 401 there is a wrong password or a dead refresh token, and
+  // refreshing in response to the refresh call would wait on itself forever.
+  if (response.status === 401 && !isRetry && !path.startsWith("/auth/")) {
+    if (await refreshOnce()) {
       return request<T>(path, options, true);
     }
   }
@@ -58,7 +97,8 @@ async function request<T>(path: string, options: RequestInit = {}, isRetry = fal
   }
 
   const contentType = response.headers.get("content-type") ?? "";
-  const body = contentType.includes("json") ? await response.json() : undefined;
+  // A proxy/gateway error page can claim JSON and not be - treat it as no body rather than crash.
+  const body = contentType.includes("json") ? await response.json().catch(() => undefined) : undefined;
 
   if (!response.ok) {
     const problem = body as ProblemDetails | undefined;

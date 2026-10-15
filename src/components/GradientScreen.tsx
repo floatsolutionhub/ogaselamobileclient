@@ -1,15 +1,17 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 
 import { gradients } from "@/theme/colors";
 
 type GradientScreenProps = {
   children: React.ReactNode;
   scroll?: boolean;
+  /** Screens sitting above the tab bar drop "bottom" - the tab bar already pads for the home indicator. */
+  edges?: Edge[];
 };
 
-export function GradientScreen({ children, scroll = true }: GradientScreenProps) {
+export function GradientScreen({ children, scroll = true, edges }: GradientScreenProps) {
   // Deliberately not "const Content = scroll ? ScrollView : (props) => <>{props.children}</>" -
   // that inline arrow function is a brand-new component identity on every render, which makes
   // React unmount and remount the whole subtree (wiping any Formik/form state inside it) on
@@ -18,7 +20,7 @@ export function GradientScreen({ children, scroll = true }: GradientScreenProps)
   // an intermediate variable) keeps the subtree's identity - and its state - intact across renders.
   return (
     <LinearGradient colors={gradients.screen} className="flex-1">
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={edges}>
         <KeyboardAvoidingView
           className="flex-1"
           behavior={Platform.OS === "ios" ? "padding" : undefined}

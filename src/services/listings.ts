@@ -22,6 +22,12 @@ export interface ListingInput {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  /** Used items only. */
+  hasOriginalReceipt?: boolean | null;
+  tikTokUrl?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  youTubeUrl?: string | null;
 }
 
 export function createDraft(input: ListingInput): Promise<Listing> {

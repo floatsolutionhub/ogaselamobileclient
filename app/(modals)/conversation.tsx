@@ -15,9 +15,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+import { ChatSafetyNotice } from "@/components/ChatSafetyNotice";
 import { useAuth } from "@/context/AuthContext";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { ApiError } from "@/lib/apiClient";
+import { useUnreadMessages } from "@/context/UnreadMessagesContext";
 import { useMessagingHub } from "@/lib/messagingHub";
 import * as messagingService from "@/services/messaging";
 import { colors } from "@/theme/colors";
@@ -38,6 +40,8 @@ export default function ConversationScreen() {
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
+  const { refresh: refreshUnread } = useUnreadMessages();
+
   const appendMessage = useCallback((message: Message) => {
     setMessages((prev) => {
       if (prev.some((existing) => existing.id === message.id)) return prev;
@@ -54,6 +58,8 @@ export default function ConversationScreen() {
       try {
         const page = await messagingService.getMessages(conversationId);
         if (!cancelled) setMessages(page.items);
+        // Loading the thread marked its messages read - bring the tab badge down.
+        refreshUnread();
       } catch (error) {
         if (!cancelled) {
           const message =
@@ -74,12 +80,17 @@ export default function ConversationScreen() {
     return () => {
       cancelled = true;
     };
-  }, [conversationId]);
+  }, [conversationId, refreshUnread]);
 
   // Live updates while this thread is open - REST above is still the source of truth on mount.
   useMessagingHub((message) => {
     if (message.conversationId === conversationId) {
       appendMessage(message);
+      // Seen as it arrived: mark it read so it doesn't count towards the tab badge.
+      messagingService
+        .getMessages(conversationId, 1, 1)
+        .then(() => refreshUnread())
+        .catch(() => {});
     }
   });
 
@@ -210,7 +221,10 @@ export default function ConversationScreen() {
           />
         )}
 
-        <View className="flex-row items-end gap-2 border-t border-brand-50 px-4 py-3">
+        <View className="border-t border-brand-50 px-4 pt-3">
+          <ChatSafetyNotice />
+        </View>
+        <View className="flex-row items-end gap-2 px-4 py-3">
           <TextInput
             value={draft}
             onChangeText={setDraft}

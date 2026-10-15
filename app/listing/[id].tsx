@@ -6,8 +6,10 @@ import {
   Heart,
   ImageOff,
   MapPin,
+  ExternalLink,
   MessageCircle,
   Phone,
+  ReceiptText,
   Star,
   Store,
   Flag,
@@ -32,6 +34,8 @@ import Toast from "react-native-toast-message";
 
 import { ListingCard } from "@/components/ListingCard";
 import { ReportSheet } from "@/components/ReportSheet";
+import { VerifiedBusinessPill } from "@/components/VerifiedBusinessPill";
+import { YouTubePlayer } from "@/components/YouTubePlayer";
 import { useAuth } from "@/context/AuthContext";
 import { useFavourites } from "@/context/FavouritesContext";
 import { ApiError } from "@/lib/apiClient";
@@ -41,6 +45,7 @@ import * as messagingService from "@/services/messaging";
 import * as reviewsService from "@/services/reviews";
 import * as searchService from "@/services/search";
 import { colors } from "@/theme/colors";
+import { SOCIAL_PLATFORMS, youTubeVideoId } from "@/utils/socialLinks";
 import type {
   Listing,
   ListingDetail,
@@ -305,6 +310,18 @@ export default function ListingDetailScreen() {
   const isOwnListing = user?.id === listing.seller.userId;
   const favourited = isFavourite(listing.id);
   const storeAddress = listing.seller.storeAddress ?? listing.location;
+  // A YouTube video plays right on the ad; any other link opens in its app (or the browser).
+  const videoId = listing.youTubeUrl ? youTubeVideoId(listing.youTubeUrl) : null;
+  const linkByPlatform = {
+    youtube: videoId ? null : listing.youTubeUrl,
+    tiktok: listing.tikTokUrl,
+    instagram: listing.instagramUrl,
+    facebook: listing.facebookUrl,
+  };
+  const socialLinks = SOCIAL_PLATFORMS.flatMap((platform) => {
+    const url = linkByPlatform[platform.key];
+    return url ? [{ ...platform, url }] : [];
+  });
 
   return (
     <View className="flex-1 bg-white">
@@ -394,11 +411,61 @@ export default function ListingDetailScreen() {
             />
           </View>
 
+          {listing.condition === "Used" && listing.hasOriginalReceipt != null ? (
+            <View
+              className={`mt-3 flex-row items-center gap-2 self-start rounded-full px-3 py-1.5 ${
+                listing.hasOriginalReceipt ? "bg-brand-50" : "bg-surface"
+              }`}
+            >
+              <ReceiptText
+                size={14}
+                color={listing.hasOriginalReceipt ? colors.brand600 : colors.ink500}
+              />
+              <Text
+                className={`font-poppins-medium text-xs ${
+                  listing.hasOriginalReceipt ? "text-brand-700" : "text-ink-500"
+                }`}
+              >
+                {listing.hasOriginalReceipt
+                  ? "Comes with original receipt"
+                  : "No original receipt"}
+              </Text>
+            </View>
+          ) : null}
+
           <Section title="Description">
             <Text className="font-poppins text-sm leading-6 text-ink-700">
               {listing.description}
             </Text>
           </Section>
+
+          {videoId ? (
+            <Section title="Video">
+              <YouTubePlayer videoId={videoId} />
+            </Section>
+          ) : null}
+
+          {socialLinks.length > 0 ? (
+            <Section title="See it on">
+              <View className="flex-row flex-wrap gap-2">
+                {socialLinks.map(({ key, label, color, url }) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => Linking.openURL(url).catch(() => {})}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open this ad on ${label}`}
+                    className="flex-row items-center gap-1.5 rounded-full px-4 py-2 active:opacity-80"
+                    style={{ backgroundColor: color }}
+                  >
+                    <Text className="font-poppins-semibold text-xs text-white">
+                      {label}
+                    </Text>
+                    <ExternalLink size={13} color={colors.white} />
+                  </Pressable>
+                ))}
+              </View>
+            </Section>
+          ) : null}
 
           <Section title="Seller">
             <Pressable
@@ -428,6 +495,9 @@ export default function ListingDetailScreen() {
                       <BadgeCheck size={16} color={colors.brand600} />
                     ) : null}
                   </View>
+                  {listing.seller.isBusinessVerified ? (
+                    <VerifiedBusinessPill />
+                  ) : null}
                   <Text className="font-poppins text-xs text-ink-500">
                     On Ogasela since{" "}
                     {moment(listing.seller.memberSince).format("MMM YYYY")}

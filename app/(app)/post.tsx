@@ -4,6 +4,7 @@ import {
   Camera,
   Check,
   ChevronLeft,
+  Link as LinkIcon,
   Plus,
   Sparkles,
   Tag,
@@ -26,9 +27,11 @@ import { FormField } from "@/components/FormField";
 import { GradientScreen } from "@/components/GradientScreen";
 import { PostStepProgress } from "@/components/PostStepProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { VerificationBadge } from "@/components/VerificationBadge";
 import { useLocation } from "@/context/LocationContext";
 import { useCategoryTree } from "@/hooks/useCategoryTree";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import { ApiError } from "@/lib/apiClient";
 import * as aiService from "@/services/ai";
 import * as listingsService from "@/services/listings";
@@ -36,7 +39,23 @@ import { colors } from "@/theme/colors";
 import { ListingCondition } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
 import { prepareListingPhoto } from "@/utils/photos";
+import {
+  isPlatformLink,
+  SOCIAL_PLATFORMS,
+  type SocialPlatform,
+} from "@/utils/socialLinks";
 import { createListingSchema } from "@/utils/validation";
+
+/** Form labels on this screen are bigger and bolder than the app default. */
+const LABEL = "mb-2 font-poppins-semibold text-base text-ink-900";
+
+/** The form field holding each platform's link. */
+const LINK_FIELD: Record<SocialPlatform, "youTubeUrl" | "tikTokUrl" | "instagramUrl" | "facebookUrl"> = {
+  youtube: "youTubeUrl",
+  tiktok: "tikTokUrl",
+  instagram: "instagramUrl",
+  facebook: "facebookUrl",
+};
 
 /** The API's limit (Listing.MaxPhotoCount). */
 const MAX_PHOTOS = 5;
@@ -54,6 +73,12 @@ type Values = {
   condition: ListingCondition | "";
   description: string;
   price: string;
+  /** Used items: whether the seller has the original receipt of purchase. */
+  hasReceipt: boolean;
+  youTubeUrl: string;
+  tikTokUrl: string;
+  instagramUrl: string;
+  facebookUrl: string;
 };
 
 const EMPTY: Values = {
@@ -63,6 +88,11 @@ const EMPTY: Values = {
   condition: "",
   description: "",
   price: "",
+  hasReceipt: false,
+  youTubeUrl: "",
+  tikTokUrl: "",
+  instagramUrl: "",
+  facebookUrl: "",
 };
 
 type PickedPhoto = {
@@ -95,6 +125,10 @@ export default function PostScreen() {
   const params = useLocalSearchParams<{ listingId?: string }>();
   const { locationLabel, isNationwide } = useLocation();
   const { tree } = useCategoryTree();
+
+  // Only verified accounts can sell: until then the form is shown but Continue stays disabled.
+  const { overview: verification } = useVerificationOverview();
+  const canSell = verification?.personal.status === "Verified";
 
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Values>(EMPTY);
@@ -148,6 +182,11 @@ export default function PostScreen() {
           condition: ad.condition,
           description: ad.description,
           price: ad.price != null ? String(ad.price) : "",
+          hasReceipt: ad.hasOriginalReceipt === true,
+          youTubeUrl: ad.youTubeUrl ?? "",
+          tikTokUrl: ad.tikTokUrl ?? "",
+          instagramUrl: ad.instagramUrl ?? "",
+          facebookUrl: ad.facebookUrl ?? "",
         });
         setPhotos(ad.mediaUrls.map((url, i) => ({ uri: url, url, fileName: `photo-${i}.jpg`, mimeType: "image/jpeg" })));
         setListingId(ad.id);
@@ -209,6 +248,14 @@ export default function PostScreen() {
       location: isNationwide ? null : locationLabel,
       latitude: null,
       longitude: null,
+      hasOriginalReceipt: v.condition === "Used" ? v.hasReceipt : null,
+      // A half-typed link is left out rather than failing the whole draft save; Continue flags it.
+      ...Object.fromEntries(
+        SOCIAL_PLATFORMS.map(({ key }) => {
+          const url = v[LINK_FIELD[key]].trim();
+          return [LINK_FIELD[key], url && isPlatformLink(key, url) ? url : null];
+        }),
+      ),
     };
     if (id) {
       await listingsService.update(id, input);
@@ -365,6 +412,13 @@ export default function PostScreen() {
         found[field] = (err as Error).message;
       }
     }
+    if (current.key === "copy") {
+      for (const { key, label } of SOCIAL_PLATFORMS) {
+        if (!isPlatformLink(key, values[LINK_FIELD[key]])) {
+          found[LINK_FIELD[key]] = `Enter a full ${label} link (starting with https://), or leave it blank.`;
+        }
+      }
+    }
     if (current.key === "photos" && photos.length === 0) {
       Toast.show({ type: "error", text1: "Add at least one photo", text2: "Ads with photos sell much faster." });
       return false;
@@ -446,10 +500,24 @@ export default function PostScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        {verification && !canSell ? (
+          <View className="mb-5">
+            <VerificationBadge
+              kind="personal"
+              track={verification.personal}
+              note={
+                verification.personal.status === "PendingReview"
+                  ? "You'll be able to post ads as a seller once our team approves your verification."
+                  : "You need to complete account verification before you can become a seller and post ads."
+              }
+            />
+          </View>
+        ) : null}
         {current.key === "details" ? (
           <>
             <FormField
               label="Ad title"
+              labelClassName={LABEL}
               placeholder="e.g. iPhone 13 Pro Max, 256GB"
               value={values.title}
               onChangeText={(text) => set("title", text)}
@@ -458,7 +526,7 @@ export default function PostScreen() {
               touched={!!errors.title}
             />
 
-            <Text className="mb-2 font-poppins-medium text-sm text-ink-700">Category</Text>
+            <Text className={LABEL}>Category</Text>
             <View className="flex-row flex-wrap gap-2">
               {tree.map((c) => (
                 <Chip
@@ -479,8 +547,9 @@ export default function PostScreen() {
 
             {category && category.children.length > 0 ? (
               <>
-                <Text className="mb-2 mt-5 font-poppins-medium text-sm text-ink-700">
-                  Subcategory <Text className="text-ink-500">(optional)</Text>
+                <Text className={`mt-5 ${LABEL}`}>
+                  Sub Category{" "}
+                  <Text className="font-poppins text-sm text-ink-500">(optional)</Text>
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
                   {category.children.map((c) => (
@@ -495,7 +564,7 @@ export default function PostScreen() {
               </>
             ) : null}
 
-            <Text className="mb-1.5 mt-5 font-poppins-medium text-sm text-ink-700">Condition</Text>
+            <Text className={`mt-5 ${LABEL}`}>Condition</Text>
             <View className="flex-row gap-3">
               {(["New", "Used"] as ListingCondition[]).map((option) => {
                 const active = values.condition === option;
@@ -516,6 +585,31 @@ export default function PostScreen() {
             </View>
             {errors.condition ? (
               <Text className="mt-1 font-poppins text-xs text-danger">{errors.condition}</Text>
+            ) : null}
+
+            {values.condition === "Used" ? (
+              <Pressable
+                onPress={() => set("hasReceipt", !values.hasReceipt)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: values.hasReceipt }}
+                className="mt-4 flex-row items-center gap-3 rounded-2xl border border-brand-100 bg-surface px-4 py-3.5"
+              >
+                <View
+                  className={`h-6 w-6 items-center justify-center rounded-md border-2 ${
+                    values.hasReceipt ? "border-brand-600 bg-brand-600" : "border-ink-300 bg-white"
+                  }`}
+                >
+                  {values.hasReceipt ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
+                </View>
+                <View className="flex-1">
+                  <Text className="font-poppins-semibold text-sm text-ink-900">
+                    I have the original receipt of purchase
+                  </Text>
+                  <Text className="font-poppins text-xs text-ink-500">
+                    Your ad will tell buyers whether a receipt comes with it.
+                  </Text>
+                </View>
+              </Pressable>
             ) : null}
           </>
         ) : null}
@@ -572,7 +666,7 @@ export default function PostScreen() {
         {current.key === "copy" ? (
           <>
             <View className="mb-1.5 flex-row items-center justify-between">
-              <Text className="font-poppins-medium text-sm text-ink-700">Description</Text>
+              <Text className="font-poppins-semibold text-base text-ink-900">Description</Text>
               <AiButton label="Suggest with AI" loading={aiLoading} onPress={() => suggestDescription()} />
             </View>
             <TextInput
@@ -595,6 +689,7 @@ export default function PostScreen() {
             <View className="mt-5" />
             <FormField
               label="Price (₦)"
+              labelClassName={LABEL}
               icon={Tag}
               placeholder="e.g. 250000"
               keyboardType="number-pad"
@@ -608,6 +703,29 @@ export default function PostScreen() {
               <AiButton label="Suggest a price" loading={aiLoading} onPress={suggestPrice} />
             </View>
             <AiNote loading={aiLoading} note={aiNote} />
+
+            <Text className={`mt-6 ${LABEL}`}>
+              Social links <Text className="font-poppins text-sm text-ink-500">(optional)</Text>
+            </Text>
+            <Text className="-mt-1 mb-3 font-poppins text-xs text-ink-500">
+              Got this item on TikTok, Instagram, Facebook or YouTube? Add the link - buyers can open it from
+              your ad, and YouTube videos play right on it.
+            </Text>
+            {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
+              <FormField
+                key={key}
+                label={label}
+                icon={LinkIcon}
+                placeholder={placeholder}
+                keyboardType="url"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={values[LINK_FIELD[key]]}
+                onChangeText={(text) => set(LINK_FIELD[key], text)}
+                error={errors[LINK_FIELD[key]]}
+                touched={!!errors[LINK_FIELD[key]]}
+              />
+            ))}
           </>
         ) : null}
       </ScrollView>
@@ -627,6 +745,7 @@ export default function PostScreen() {
           <PrimaryButton
             label={step === STEPS.length - 1 ? "Continue to promote & pay" : "Continue"}
             loading={!!busy}
+            disabled={!canSell}
             onPress={next}
           />
         </View>

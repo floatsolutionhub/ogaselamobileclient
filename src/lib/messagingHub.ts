@@ -16,19 +16,26 @@ const HUB_URL = `${env.apiUrl.replace(/\/api\/v1\/?$/, "")}/hubs/messaging`;
  * in, so callers should check message.conversationId themselves before appending it to a
  * specific thread's list).
  */
-export function useMessagingHub(onMessage: (message: Message) => void): void {
+export function useMessagingHub(
+  onMessage: (message: Message) => void,
+  /** Connects only while true - pass the signed-in state so it (re)connects after sign-in. */
+  enabled = true,
+): void {
   const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  });
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
+    if (!enabled || !getAccessToken()) return;
 
     // /hubs/* is the one path family that accepts the JWT via query string (see
     // JwtBearerEvents.OnMessageReceived in Program.cs) - a WebSocket handshake can't carry a
-    // custom Authorization header.
+    // custom Authorization header. accessTokenFactory puts it there, and asks again on every
+    // reconnect, so a token refreshed while the thread is open is picked up instead of the
+    // reconnect being rejected with the expired one.
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${HUB_URL}?access_token=${encodeURIComponent(token)}`)
+      .withUrl(HUB_URL, { accessTokenFactory: () => getAccessToken() ?? "" })
       .withAutomaticReconnect()
       .build();
 
@@ -42,5 +49,5 @@ export function useMessagingHub(onMessage: (message: Message) => void): void {
     return () => {
       connection.stop();
     };
-  }, []);
+  }, [enabled]);
 }

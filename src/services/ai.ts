@@ -1,6 +1,7 @@
 // Ogasela.Api/Controllers/Ai/AiController.cs - one function per route. Every tool is gated by the
 // given plan's AiToolTier - a plan without that capability fails with Ai.NotIncludedInPlan (403).
 import { api } from "@/lib/apiClient";
+import { appendFile, type LocalFile } from "@/services/me";
 import type { EnhanceImageResponse, ListingCondition, ListingCopySuggestion, PriceSuggestion } from "@/types/api";
 
 /** Pass promotionPlanId null while posting an ad (no plan chosen yet) - the tool is free then. */
@@ -29,10 +30,10 @@ export function suggestPrice(
 /** Multipart, up to 20MB. A real brightness/contrast/sharpen pass, not AI-generated - the returned URL/key can feed generateDescription's imageRef or a listing's mediaUrls. */
 export function enhanceImage(
   promotionPlanId: string,
-  image: { uri: string; name: string; type: string }
+  image: LocalFile
 ): Promise<EnhanceImageResponse> {
   const formData = new FormData();
   formData.append("promotionPlanId", promotionPlanId);
-  formData.append("image", { uri: image.uri, name: image.name, type: image.type } as unknown as Blob);
+  appendFile(formData, "image", image);
   return api.postForm<EnhanceImageResponse>("/ai/enhance-image", formData);
 }

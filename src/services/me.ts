@@ -112,6 +112,40 @@ export interface UserDocument {
   reviewNote?: string | null;
 }
 
+export type VerificationTrackStatus =
+  | "NotStarted"
+  | "InProgress"
+  | "PendingReview"
+  | "Verified";
+export type VerificationItemKey =
+  | "Selfie"
+  | "IdCard"
+  | "UtilityBill"
+  | "BusinessRegistration"
+  | "OfficeUtilityBill";
+export type VerificationItemState =
+  | "Missing"
+  | "Submitted"
+  | "Approved"
+  | "Rejected";
+
+export interface VerificationTrack {
+  status: VerificationTrackStatus;
+  verifiedAt: string | null;
+  items: { key: VerificationItemKey; state: VerificationItemState; note?: string | null }[];
+}
+
+export interface VerificationOverview {
+  personal: VerificationTrack;
+  /** Null for buyers - they get a business once staff verify them and they become a seller. */
+  business: VerificationTrack | null;
+}
+
+/** Personal and (sellers) business verification: status plus what's still missing. */
+export function getVerificationOverview(): Promise<VerificationOverview> {
+  return api.get<VerificationOverview>("/me/verification");
+}
+
 /** Newest first - the first of each type is the current one. */
 export function getMyDocuments(): Promise<UserDocument[]> {
   return api.get<UserDocument[]>("/me/documents");

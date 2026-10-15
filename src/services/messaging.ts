@@ -10,6 +10,16 @@ export function getConversations(page = 1, pageSize = 20): Promise<PagedResult<C
   return api.get<PagedResult<Conversation>>(`/conversations?page=${page}&pageSize=${pageSize}`);
 }
 
+/** The safety caption shown above the message box - SuperAdmins edit it in the Control Portal. */
+export function getSafetyNotice(): Promise<{ text: string }> {
+  return api.get<{ text: string }>("/conversations/safety-notice");
+}
+
+/** Unread messages sent to the signed-in user across all their conversations. */
+export function getUnreadMessageCount(): Promise<number> {
+  return api.get<number>("/conversations/unread-count");
+}
+
 /** Also marks the other party's messages as read as a side effect. Oldest-first within the page. */
 export function getMessages(conversationId: string, page = 1, pageSize = 30): Promise<PagedResult<Message>> {
   return api.get<PagedResult<Message>>(`/conversations/${conversationId}/messages?page=${page}&pageSize=${pageSize}`);

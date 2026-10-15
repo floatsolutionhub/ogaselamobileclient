@@ -29,9 +29,11 @@ import { GradientScreen } from "@/components/GradientScreen";
 import { ListingCard } from "@/components/ListingCard";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SupportFab } from "@/components/SupportFab";
+import { VerificationBadge } from "@/components/VerificationBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { useCategoryTree } from "@/hooks/useCategoryTree";
+import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import * as listingsService from "@/services/listings";
 import { colors, gradients } from "@/theme/colors";
 import type { SearchResultItem } from "@/types/api";
@@ -60,6 +62,12 @@ export default function HomeScreen() {
   );
   const { locationLabel, selectedCity, isReady, hasOnboarded } = useLocation();
   const { isAuthenticated } = useAuth();
+  const { overview: verification, refresh: refreshVerification } =
+    useVerificationOverview();
+  const showPersonalBadge =
+    !!verification && verification.personal.status !== "Verified";
+  const showBusinessBadge =
+    !!verification?.business && verification.business.status !== "Verified";
 
   // The compact top bar fades in once the hero (location pill + green search card) has scrolled
   // fully out of view, and out again when it's back.
@@ -96,7 +104,11 @@ export default function HomeScreen() {
       loadMoreHotPicks();
     }
   };
-  const { tree, isLoading: categoriesLoading } = useCategoryTree();
+  const {
+    tree,
+    isLoading: categoriesLoading,
+    refresh: refreshCategories,
+  } = useCategoryTree();
 
   // Hot Picks: up to 50 ads, PAGE_SIZE at a time as the user scrolls. The seed keeps the shuffled
   // order stable while paging; pulling to refresh picks a new seed for a fresh mix.
@@ -113,6 +125,8 @@ export default function HomeScreen() {
   const [hotLoadingMore, setHotLoadingMore] = useState(false);
   const [hotError, setHotError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Categories and verification statuses refresh alongside Hot Picks; the spinner waits for all.
+  const [refreshingOthers, setRefreshingOthers] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const hotRequestId = useRef(0);
 
@@ -228,17 +242,23 @@ export default function HomeScreen() {
   );
 
   return (
-    <GradientScreen scroll={false}>
+    // No bottom safe-area edge: the tab bar already pads for the home indicator, so the feed runs
+    // straight down to it instead of stopping short.
+    <GradientScreen scroll={false} edges={["top", "left", "right"]}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 16 }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={refreshing || refreshingOthers}
             onRefresh={() => {
               setRefreshing(true);
               setHotSeed(newSeed());
+              setRefreshingOthers(true);
+              Promise.all([refreshCategories(), refreshVerification()]).finally(
+                () => setRefreshingOthers(false),
+              );
             }}
             tintColor={colors.brand600}
           />
@@ -289,6 +309,18 @@ export default function HomeScreen() {
             </Pressable>
           </LinearGradient>
         </View>
+
+        {/* Shown until each track is verified, so users can see what's left at a glance. */}
+        {showPersonalBadge || showBusinessBadge ? (
+          <View className="mx-6 mt-6 gap-3">
+            {showPersonalBadge && verification ? (
+              <VerificationBadge kind="personal" track={verification.personal} />
+            ) : null}
+            {showBusinessBadge && verification?.business ? (
+              <VerificationBadge kind="business" track={verification.business} />
+            ) : null}
+          </View>
+        ) : null}
 
         <View className="mt-6">
           <Text className="mb-3 px-6 font-poppins-semibold text-base text-ink-900">

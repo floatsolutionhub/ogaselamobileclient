@@ -1,5 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import {
+  BadgeCheck,
   Camera,
   ChevronLeft,
   CreditCard,
@@ -7,6 +8,7 @@ import {
   Mail,
   Phone,
   Receipt,
+  ScanFace,
   User,
   UserRound,
   type LucideIcon,
@@ -28,6 +30,7 @@ import {
   DocumentUploadSheet,
   ID_TYPE_LABELS,
 } from "@/components/DocumentUploadSheet";
+import { DocumentDetailSheet } from "@/components/DocumentDetailSheet";
 import { DocumentRow } from "@/components/DocumentRow";
 import { FormField } from "@/components/FormField";
 import { useAuth } from "@/context/AuthContext";
@@ -48,10 +51,16 @@ export default function PersonalInfoScreen() {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [uploading, setUploading] = useState<UserDocumentType | null>(null);
+  const [viewing, setViewing] = useState<{
+    document: UserDocument;
+    title: string;
+  } | null>(null);
 
+  // Only when the saved name itself changes - refreshUser() on every focus hands back a new user
+  // object, and keying off that wiped whatever was being typed.
   useEffect(() => {
     setName(user?.name ?? "");
-  }, [user]);
+  }, [user?.name]);
 
   // Pick up a new profile photo when coming back from face capture.
   useFocusEffect(
@@ -91,6 +100,40 @@ export default function PersonalInfoScreen() {
   const latest = (type: UserDocumentType) =>
     documents.find((d) => d.type === type);
 
+  // Once verified, the selfie, ID card and utility bill are locked: documents open read-only.
+  const isVerified = user?.sellerProfile?.verificationStatus === "Verified";
+  const hasSelfie = !!user?.profilePhotoUrl;
+  // A rejected upload has to be replaced, so it counts as missing.
+  const hasUpload = (type: UserDocumentType) => {
+    const document = latest(type);
+    return !!document && document.status !== "Rejected";
+  };
+  const missingDocuments = [
+    !hasUpload("IdCard") && "ID card",
+    !hasUpload("UtilityBill") && "utility bill",
+  ].filter(Boolean);
+  // Everything is in, so there's nothing left to (re)take until the review is done.
+  const photoLocked =
+    isVerified ||
+    (hasSelfie && !documentsLoading && missingDocuments.length === 0);
+
+  const openDocument = (type: UserDocumentType, title: string) => {
+    if (!isVerified) {
+      setUploading(type);
+      return;
+    }
+    const document = latest(type);
+    if (document) setViewing({ document, title });
+  };
+
+  const photoCaption = isVerified
+    ? "Verified"
+    : !hasSelfie
+      ? "Tap the camera icon to take a live selfie to complete biometric verification - it must clearly show your face."
+      : missingDocuments.length > 0
+        ? `Awaiting ${missingDocuments.join(" and ")} upload`
+        : "Pending approval";
+
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center gap-3 px-6 pb-2 pt-4">
@@ -116,7 +159,8 @@ export default function PersonalInfoScreen() {
         <View className="items-center rounded-3xl border border-brand-50 bg-white p-6">
           <Pressable
             onPress={() => router.push("/face-capture")}
-            accessibilityRole="button"
+            disabled={photoLocked}
+            accessibilityRole={photoLocked ? "image" : "button"}
             accessibilityLabel={
               user?.profilePhotoUrl
                 ? "Retake profile photo"
@@ -137,18 +181,33 @@ export default function PersonalInfoScreen() {
                 />
               </View>
             )}
-            <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand-600">
-              <Camera size={16} color={colors.white} />
-            </View>
+            {photoLocked ? null : (
+              <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand-600">
+                <Camera size={16} color={colors.white} />
+              </View>
+            )}
           </Pressable>
           <Text className="mt-3 font-poppins-semibold text-base text-ink-900">
             Profile photo
           </Text>
-          <Text className="mt-0.5 text-center font-poppins text-xs text-ink-500">
-            {user?.profilePhotoUrl
-              ? "Tap to retake it with face capture."
-              : "Tap to take one with face capture - it must clearly show your face."}
-          </Text>
+          {hasSelfie && !isVerified && documentsLoading ? null : (
+            <View
+              className={`mt-3 flex-row items-center gap-2 rounded-2xl border px-4 py-2.5 ${
+                isVerified
+                  ? "border-brand-100 bg-brand-50"
+                  : "border-gold-200 bg-gold-50"
+              }`}
+            >
+              {isVerified ? (
+                <BadgeCheck size={18} color={colors.brand600} />
+              ) : (
+                <ScanFace size={18} color={colors.gold700} />
+              )}
+              <Text className="flex-shrink font-poppins-medium text-xs text-ink-900">
+                {photoCaption}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Basic information */}
@@ -201,7 +260,9 @@ export default function PersonalInfoScreen() {
               Documents
             </Text>
             <Text className="mt-0.5 font-poppins text-xs text-ink-500">
-              Upload your ID and proof of address. Our team reviews them.
+              {isVerified
+                ? "Verified - tap a document to view it."
+                : "Upload your ID and proof of address. Our team reviews them."}
             </Text>
           </View>
           {documentsLoading ? (
@@ -218,7 +279,7 @@ export default function PersonalInfoScreen() {
                 subtitleFor={(d) =>
                   `${d.idType ? ID_TYPE_LABELS[d.idType] : "ID"} · ${d.idNumber ?? ""} · ${moment(d.createdAt).format("D MMM YYYY")}`
                 }
-                onPress={() => setUploading("IdCard")}
+                onPress={() => openDocument("IdCard", "ID Card")}
               />
               <DocumentRow
                 icon={Receipt}
@@ -227,7 +288,7 @@ export default function PersonalInfoScreen() {
                 subtitleFor={(d) =>
                   `${d.fileName} · ${moment(d.createdAt).format("D MMM YYYY")}`
                 }
-                onPress={() => setUploading("UtilityBill")}
+                onPress={() => openDocument("UtilityBill", "Utility Bill")}
                 last
               />
             </>
@@ -239,6 +300,11 @@ export default function PersonalInfoScreen() {
         type={uploading}
         onClose={() => setUploading(null)}
         onUploaded={(document) => setDocuments((prev) => [document, ...prev])}
+      />
+      <DocumentDetailSheet
+        document={viewing?.document ?? null}
+        title={viewing?.title ?? ""}
+        onClose={() => setViewing(null)}
       />
     </SafeAreaView>
   );

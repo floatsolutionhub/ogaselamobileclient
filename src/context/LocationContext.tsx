@@ -67,6 +67,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             ...DEFAULT_LOCATION,
             ...(JSON.parse(raw) as StoredLocation),
           });
+      } catch {
+        // Unreadable storage - keep the default location rather than crash on launch.
       } finally {
         setIsReady(true);
       }
