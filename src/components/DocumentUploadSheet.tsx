@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -22,6 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+import { Modal } from "@/components/ActivityModal";
 import { ApiError } from "@/lib/apiClient";
 import {
   uploadDocument,
@@ -32,6 +32,7 @@ import {
 } from "@/services/me";
 import { colors } from "@/theme/colors";
 import { compressImage, MAX_EDGE, MAX_PDF_BYTES } from "@/utils/photos";
+import { ICON } from "@/theme/typography";
 
 export const ID_TYPE_LABELS: Record<IdDocumentType, string> = {
   NationalIdCard: "National ID card",
@@ -226,7 +227,7 @@ export function DocumentUploadSheet({
           }}
         >
           <View className="mb-1 flex-row items-center justify-between px-6">
-            <Text className="font-poppins-semibold text-lg text-ink-900">
+            <Text className="font-poppins-semibold text-title text-ink-900">
               {copy.title}
             </Text>
             <Pressable
@@ -234,10 +235,10 @@ export function DocumentUploadSheet({
               hitSlop={10}
               className="h-9 w-9 items-center justify-center rounded-full bg-surface"
             >
-              <X size={18} color={colors.ink700} />
+              <X size={ICON.md} color={colors.ink700} />
             </Pressable>
           </View>
-          <Text className="mb-3 px-6 font-poppins text-xs text-ink-500">
+          <Text className="mb-3 px-6 font-poppins text-caption text-ink-500">
             {copy.hint}
           </Text>
 
@@ -247,7 +248,7 @@ export function DocumentUploadSheet({
           >
             {isIdCard ? (
               <>
-                <Text className="mb-2 mt-2 font-poppins-medium text-sm text-ink-700">
+                <Text className="mb-2 mt-2 font-poppins-medium text-body text-ink-700">
                   ID type
                 </Text>
                 <View
@@ -268,7 +269,7 @@ export function DocumentUploadSheet({
                         }`}
                       >
                         <Text
-                          className={`font-poppins-medium text-xs ${selected ? "text-white" : "text-ink-700"}`}
+                          className={`font-poppins-medium text-caption ${selected ? "text-white" : "text-ink-700"}`}
                         >
                           {ID_TYPE_LABELS[option]}
                         </Text>
@@ -277,7 +278,7 @@ export function DocumentUploadSheet({
                   })}
                 </View>
 
-                <Text className="mb-1.5 mt-5 font-poppins-medium text-sm text-ink-700">
+                <Text className="mb-1.5 mt-5 font-poppins-medium text-body text-ink-700">
                   ID number
                 </Text>
                 <TextInput
@@ -290,34 +291,34 @@ export function DocumentUploadSheet({
                   autoCapitalize="characters"
                   autoCorrect={false}
                   maxLength={20}
-                  className="rounded-2xl border border-brand-100 bg-surface px-4 py-3.5 font-poppins text-base text-ink-900"
+                  className="rounded-2xl border border-brand-100 bg-surface px-4 py-3.5 font-poppins text-subtitle text-ink-900"
                 />
                 {idNumber.length > 0 && !idNumberValid ? (
-                  <Text className="mt-1 font-poppins text-xs text-danger">
+                  <Text className="mt-1 font-poppins text-caption text-danger">
                     Use 5-20 letters or digits.
                   </Text>
                 ) : null}
               </>
             ) : null}
 
-            <Text className="mb-2 mt-5 font-poppins-medium text-sm text-ink-700">
+            <Text className="mb-2 mt-5 font-poppins-medium text-body text-ink-700">
               {copy.fileLabel}
             </Text>
             {file ? (
               <View className="flex-row items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-3">
                 {file.type === "application/pdf" ? (
-                  <FileText size={20} color={colors.brand700} />
+                  <FileText size={ICON.lg} color={colors.brand700} />
                 ) : (
-                  <Check size={20} color={colors.brand700} />
+                  <Check size={ICON.lg} color={colors.brand700} />
                 )}
                 <Text
-                  className="flex-1 font-poppins-medium text-sm text-ink-900"
+                  className="flex-1 font-poppins-medium text-body text-ink-900"
                   numberOfLines={1}
                 >
                   {file.name}
                 </Text>
                 <Pressable onPress={() => setFile(null)} hitSlop={8}>
-                  <Text className="font-poppins-medium text-xs text-brand-700">
+                  <Text className="font-poppins-medium text-caption text-brand-700">
                     Change
                   </Text>
                 </Pressable>
@@ -353,7 +354,7 @@ export function DocumentUploadSheet({
               {submitting ? (
                 <ActivityIndicator color={colors.white} />
               ) : (
-                <Text className="font-poppins-semibold text-base text-white">
+                <Text className="font-poppins-semibold text-subtitle text-white">
                   Upload
                 </Text>
               )}
@@ -379,8 +380,8 @@ function PickButton({
       onPress={onPress}
       className="flex-1 items-center gap-1.5 rounded-2xl border border-dashed border-brand-200 bg-surface py-4 active:bg-brand-50"
     >
-      <Icon size={20} color={colors.brand600} />
-      <Text className="font-poppins-medium text-[11px] text-ink-700">
+      <Icon size={ICON.lg} color={colors.brand600} />
+      <Text className="font-poppins-medium text-micro text-ink-700">
         {label}
       </Text>
     </Pressable>

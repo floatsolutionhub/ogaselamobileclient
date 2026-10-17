@@ -8,6 +8,7 @@ import {
   MapPin,
   ExternalLink,
   MessageCircle,
+  PackageCheck,
   Phone,
   ReceiptText,
   Star,
@@ -33,6 +34,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { ListingCard } from "@/components/ListingCard";
+import { OfficePickupSheet } from "@/components/OfficePickupSheet";
 import { ReportSheet } from "@/components/ReportSheet";
 import { VerifiedBusinessPill } from "@/components/VerifiedBusinessPill";
 import { YouTubePlayer } from "@/components/YouTubePlayer";
@@ -47,13 +49,13 @@ import * as searchService from "@/services/search";
 import { colors } from "@/theme/colors";
 import { SOCIAL_PLATFORMS, youTubeVideoId } from "@/utils/socialLinks";
 import type {
-  Listing,
   ListingDetail,
   PagedReviews,
   SearchResultItem,
 } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
 import { toCardItem } from "@/utils/listingCard";
+import { ICON } from "@/theme/typography";
 
 const GALLERY_HEIGHT = 320;
 
@@ -91,6 +93,7 @@ export default function ListingDetailScreen() {
   const [similarAds, setSimilarAds] = useState<SearchResultItem[]>([]);
   const [startingChat, setStartingChat] = useState(false);
   const [reporting, setReporting] = useState<"ad" | "seller" | null>(null);
+  const [officePickupOpen, setOfficePickupOpen] = useState(false);
 
   // Re-fetched when auth changes: the seller's phone is only returned to signed-in callers.
   useEffect(() => {
@@ -214,7 +217,7 @@ export default function ListingDetailScreen() {
       const conversation = await messagingService.startConversation(listing.id);
       router.push({
         pathname: "/(modals)/conversation",
-        params: { conversationId: conversation.id, title: listing.title },
+        params: { conversationId: conversation.id, title: listing.title, listingId: listing.id },
       });
     } catch (err) {
       Toast.show({
@@ -244,6 +247,14 @@ export default function ListingDetailScreen() {
     Linking.openURL(`tel:${phone}`).catch(() =>
       Toast.show({ type: "error", text1: "Couldn't open the phone app" }),
     );
+  };
+
+  const handleOfficePickup = () => {
+    if (!isAuthenticated) {
+      requireSignIn();
+      return;
+    }
+    setOfficePickupOpen(true);
   };
 
   const openReport = (target: "ad" | "seller") => {
@@ -299,7 +310,7 @@ export default function ListingDetailScreen() {
       <SafeAreaView className="flex-1 bg-white">
         <BackButton onPress={() => router.back()} />
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-center font-poppins-medium text-sm text-ink-500">
+          <Text className="text-center font-poppins-medium text-body text-ink-500">
             {loadError ?? "This ad is no longer available."}
           </Text>
         </View>
@@ -340,7 +351,7 @@ export default function ListingDetailScreen() {
               className="h-10 w-10 items-center justify-center rounded-full bg-white/90"
             >
               <Heart
-                size={18}
+                size={ICON.md}
                 color={favourited ? colors.danger : colors.ink700}
                 fill={favourited ? colors.danger : "transparent"}
               />
@@ -349,18 +360,18 @@ export default function ListingDetailScreen() {
         </View>
 
         <View className="px-6 pt-5">
-          <Text className="font-poppins-semibold text-xl text-ink-900">
+          <Text className="font-poppins-semibold text-heading text-ink-900">
             {listing.title}
           </Text>
-          <Text className="mt-2 font-poppins-bold text-2xl text-brand-700">
+          <Text className="mt-2 font-poppins-bold text-display text-brand-700">
             {listing.price !== null
               ? formatNaira(listing.price)
               : "Price on request"}
           </Text>
           <View className="mt-2 flex-row items-center gap-1">
-            <MapPin size={13} color={colors.ink300} />
+            <MapPin size={ICON.xs} color={colors.ink300} />
             <Text
-              className="font-poppins text-xs text-ink-500"
+              className="font-poppins text-caption text-ink-500"
               numberOfLines={1}
             >
               {listing.location ?? "Location not set"}
@@ -380,8 +391,8 @@ export default function ListingDetailScreen() {
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <>
-                    <MessageCircle size={18} color="#FFFFFF" />
-                    <Text className="font-poppins-semibold text-base text-white">
+                    <MessageCircle size={ICON.md} color="#FFFFFF" />
+                    <Text className="font-poppins-semibold text-subtitle text-white">
                       Message
                     </Text>
                   </>
@@ -391,11 +402,22 @@ export default function ListingDetailScreen() {
                 onPress={handleCall}
                 className="flex-row items-center justify-center gap-2 rounded-2xl border border-brand-600 bg-white py-4"
               >
-                <Phone size={18} color={colors.brand600} />
-                <Text className="font-poppins-semibold text-base text-brand-600">
+                <Phone size={ICON.md} color={colors.brand600} />
+                <Text className="font-poppins-semibold text-subtitle text-brand-600">
                   Call
                 </Text>
               </Pressable>
+              {listing.officePickupAvailable ? (
+                <Pressable
+                  onPress={handleOfficePickup}
+                  className="flex-row items-center justify-center gap-2 rounded-2xl bg-gold-400 py-4"
+                >
+                  <PackageCheck size={ICON.md} color={colors.ink900} />
+                  <Text className="font-poppins-semibold text-subtitle text-ink-900">
+                    Request Office Pickup
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
 
@@ -418,11 +440,11 @@ export default function ListingDetailScreen() {
               }`}
             >
               <ReceiptText
-                size={14}
+                size={ICON.sm}
                 color={listing.hasOriginalReceipt ? colors.brand600 : colors.ink500}
               />
               <Text
-                className={`font-poppins-medium text-xs ${
+                className={`font-poppins-medium text-caption ${
                   listing.hasOriginalReceipt ? "text-brand-700" : "text-ink-500"
                 }`}
               >
@@ -434,7 +456,7 @@ export default function ListingDetailScreen() {
           ) : null}
 
           <Section title="Description">
-            <Text className="font-poppins text-sm leading-6 text-ink-700">
+            <Text className="font-poppins text-body leading-6 text-ink-700">
               {listing.description}
             </Text>
           </Section>
@@ -457,10 +479,10 @@ export default function ListingDetailScreen() {
                     className="flex-row items-center gap-1.5 rounded-full px-4 py-2 active:opacity-80"
                     style={{ backgroundColor: color }}
                   >
-                    <Text className="font-poppins-semibold text-xs text-white">
+                    <Text className="font-poppins-semibold text-caption text-white">
                       {label}
                     </Text>
-                    <ExternalLink size={13} color={colors.white} />
+                    <ExternalLink size={ICON.xs} color={colors.white} />
                   </Pressable>
                 ))}
               </View>
@@ -481,24 +503,24 @@ export default function ListingDetailScreen() {
             >
               <View className="flex-row items-center gap-3">
                 <View className="h-11 w-11 items-center justify-center rounded-full bg-brand-50">
-                  <Store size={20} color={colors.brand600} />
+                  <Store size={ICON.lg} color={colors.brand600} />
                 </View>
                 <View className="flex-1">
                   <View className="flex-row items-center gap-1">
                     <Text
-                      className="font-poppins-semibold text-base text-ink-900"
+                      className="font-poppins-semibold text-subtitle text-ink-900"
                       numberOfLines={1}
                     >
                       {listing.seller.businessName}
                     </Text>
                     {listing.seller.verificationStatus === "Verified" ? (
-                      <BadgeCheck size={16} color={colors.brand600} />
+                      <BadgeCheck size={ICON.sm} color={colors.brand600} />
                     ) : null}
                   </View>
                   {listing.seller.isBusinessVerified ? (
                     <VerifiedBusinessPill />
                   ) : null}
-                  <Text className="font-poppins text-xs text-ink-500">
+                  <Text className="font-poppins text-caption text-ink-500">
                     On Ogasela since{" "}
                     {moment(listing.seller.memberSince).format("MMM YYYY")}
                   </Text>
@@ -506,19 +528,19 @@ export default function ListingDetailScreen() {
               </View>
               <View className="mt-3 flex-row items-start gap-2">
                 <MapPin
-                  size={15}
+                  size={ICON.sm}
                   color={colors.ink500}
                   style={{ marginTop: 2 }}
                 />
-                <Text className="flex-1 font-poppins text-sm text-ink-700">
+                <Text className="flex-1 font-poppins text-body text-ink-700">
                   {storeAddress ?? "No store address shared"}
                 </Text>
               </View>
               <View className="mt-3 flex-row items-center justify-end gap-1">
-                <Text className="font-poppins-medium text-xs text-brand-600">
+                <Text className="font-poppins-medium text-caption text-brand-600">
                   View seller profile
                 </Text>
-                <ChevronRight size={14} color={colors.brand600} />
+                <ChevronRight size={ICON.sm} color={colors.brand600} />
               </View>
             </Pressable>
           </Section>
@@ -554,8 +576,8 @@ export default function ListingDetailScreen() {
               }}
               className="mt-3 flex-row items-center justify-center gap-2 rounded-2xl border border-ink-300/40 bg-white py-3"
             >
-              <Scale size={16} color={colors.ink700} />
-              <Text className="font-poppins-semibold text-sm text-ink-700">
+              <Scale size={ICON.sm} color={colors.ink700} />
+              <Text className="font-poppins-semibold text-body text-ink-700">
                 Had a problem with this deal? Open a dispute
               </Text>
             </Pressable>
@@ -575,14 +597,14 @@ export default function ListingDetailScreen() {
               reviews && reviews.totalCount > 0 ? (
                 <View className="flex-row items-center gap-1">
                   <Star
-                    size={14}
+                    size={ICON.sm}
                     color={colors.gold500}
                     fill={colors.gold500}
                   />
-                  <Text className="font-poppins-semibold text-sm text-ink-900">
+                  <Text className="font-poppins-semibold text-body text-ink-900">
                     {reviews.averageRating.toFixed(1)}
                   </Text>
-                  <Text className="font-poppins text-xs text-ink-500">
+                  <Text className="font-poppins text-caption text-ink-500">
                     ({reviews.totalCount})
                   </Text>
                 </View>
@@ -599,10 +621,10 @@ export default function ListingDetailScreen() {
                     className="rounded-2xl border border-brand-50 bg-white p-4"
                   >
                     <View className="flex-row items-center justify-between">
-                      <Text className="font-poppins-semibold text-sm text-ink-900">
+                      <Text className="font-poppins-semibold text-body text-ink-900">
                         {review.reviewerName ?? "Ogasela buyer"}
                       </Text>
-                      <Text className="font-poppins text-[11px] text-ink-300">
+                      <Text className="font-poppins text-micro text-ink-300">
                         {moment(review.createdAt).fromNow()}
                       </Text>
                     </View>
@@ -610,7 +632,7 @@ export default function ListingDetailScreen() {
                       {[1, 2, 3, 4, 5].map((n) => (
                         <Star
                           key={n}
-                          size={12}
+                          size={ICON.xs}
                           color={colors.gold500}
                           fill={
                             n <= review.rating ? colors.gold500 : "transparent"
@@ -619,7 +641,7 @@ export default function ListingDetailScreen() {
                       ))}
                     </View>
                     {review.comment ? (
-                      <Text className="mt-2 font-poppins text-sm text-ink-700">
+                      <Text className="mt-2 font-poppins text-body text-ink-700">
                         {review.comment}
                       </Text>
                     ) : null}
@@ -651,6 +673,13 @@ export default function ListingDetailScreen() {
         onClose={() => setReporting(null)}
         onSubmit={submitReport}
       />
+
+      <OfficePickupSheet
+        visible={officePickupOpen}
+        listingId={listing.id}
+        listingTitle={listing.title}
+        onClose={() => setOfficePickupOpen(false)}
+      />
     </View>
   );
 }
@@ -669,8 +698,8 @@ function ReportButton({
       onPress={onPress}
       className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-danger/30 bg-danger/5 py-3"
     >
-      <Icon size={16} color={colors.danger} />
-      <Text className="font-poppins-semibold text-sm text-danger">{label}</Text>
+      <Icon size={ICON.sm} color={colors.danger} />
+      <Text className="font-poppins-semibold text-body text-danger">{label}</Text>
     </Pressable>
   );
 }
@@ -721,7 +750,7 @@ function Gallery({ urls }: { urls: string[] }) {
             ))}
           </View>
           <View className="absolute bottom-3 right-4 rounded-full bg-black/50 px-2.5 py-1">
-            <Text className="font-poppins-medium text-[11px] text-white">
+            <Text className="font-poppins-medium text-micro text-white">
               {index + 1}/{urls.length}
             </Text>
           </View>
@@ -738,7 +767,7 @@ function BackButton({ onPress }: { onPress: () => void }) {
       hitSlop={8}
       className="h-10 w-10 items-center justify-center rounded-full bg-white/90"
     >
-      <ChevronLeft size={20} color={colors.ink700} />
+      <ChevronLeft size={ICON.lg} color={colors.ink700} />
     </Pressable>
   );
 }
@@ -746,10 +775,10 @@ function BackButton({ onPress }: { onPress: () => void }) {
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-1 rounded-2xl border border-brand-50 bg-surface px-4 py-3">
-      <Text className="font-poppins text-[11px] uppercase tracking-wide text-ink-500">
+      <Text className="font-poppins text-micro uppercase tracking-wide text-ink-500">
         {label}
       </Text>
-      <Text className="mt-1 font-poppins-semibold text-sm text-ink-900">
+      <Text className="mt-1 font-poppins-semibold text-body text-ink-900">
         {value}
       </Text>
     </View>
@@ -768,7 +797,7 @@ function Section({
   return (
     <View className="mt-7">
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="font-poppins-semibold text-base text-ink-900">
+        <Text className="font-poppins-semibold text-subtitle text-ink-900">
           {title}
         </Text>
         {trailing}
@@ -781,7 +810,7 @@ function Section({
 function EmptyCard({ text }: { text: string }) {
   return (
     <View className="items-center rounded-2xl border border-brand-50 bg-white px-4 py-5">
-      <Text className="font-poppins text-sm text-ink-500">{text}</Text>
+      <Text className="font-poppins text-body text-ink-500">{text}</Text>
     </View>
   );
 }
@@ -797,7 +826,7 @@ function ListingRail({
 }) {
   return (
     <View className="mt-7">
-      <Text className="mb-3 px-6 font-poppins-semibold text-base text-ink-900">
+      <Text className="mb-3 px-6 font-poppins-semibold text-subtitle text-ink-900">
         {title}
       </Text>
       {listings.length === 0 ? (

@@ -85,12 +85,12 @@ export default function VerifyOtpSheet() {
   return (
     <SheetScreen scroll>
       <View className="items-center">
-        <Text className="font-poppins-bold text-xl text-ink-900">
+        <Text className="font-poppins-bold text-heading text-ink-900">
           Reset your password
         </Text>
-        <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
+        <Text className="mt-1 text-center font-poppins text-body text-ink-500">
           If {isEmail ? maskEmail(destination) : maskPhone(destination)} belongs
-          to an Ogasela account, we've sent a 6-digit code{" "}
+          to an Ogasela account, we’ve sent a 6-digit code{" "}
           {isEmail ? "by email" : "by SMS"}. It expires in 5 minutes.
         </Text>
       </View>
@@ -105,7 +105,7 @@ export default function VerifyOtpSheet() {
           error={error}
         />
         {error ? (
-          <Text className="mt-3 text-center font-poppins text-xs text-danger">
+          <Text className="mt-3 text-center font-poppins text-caption text-danger">
             Enter the 6-digit code we sent you.
           </Text>
         ) : null}
@@ -193,11 +193,11 @@ export default function VerifyOtpSheet() {
       </Formik>
 
       <View className="mb-4 mt-6 flex-row justify-center gap-1">
-        <Text className="font-poppins text-sm text-ink-500">
-          Didn't get a code?
+        <Text className="font-poppins text-body text-ink-500">
+          Didn’t get a code?
         </Text>
         <Text
-          className={`font-poppins-semibold text-sm ${
+          className={`font-poppins-semibold text-body ${
             secondsLeft > 0 || resending ? "text-ink-300" : "text-brand-600"
           }`}
           onPress={handleResend}

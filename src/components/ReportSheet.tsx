@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -13,7 +12,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Modal } from "@/components/ActivityModal";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type ReportSheetProps = {
   visible: boolean;
@@ -86,14 +87,14 @@ export function ReportSheet({
           }}
         >
           <View className="mb-1 flex-row items-center justify-between">
-            <Text className="font-poppins-semibold text-lg text-ink-900">
+            <Text className="font-poppins-semibold text-title text-ink-900">
               {title}
             </Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color={colors.ink500} />
+              <X size={ICON.lg} color={colors.ink500} />
             </Pressable>
           </View>
-          <Text className="mb-4 font-poppins text-xs text-ink-500">
+          <Text className="mb-4 font-poppins text-caption text-ink-500">
             {subtitle}
           </Text>
 
@@ -110,10 +111,10 @@ export function ReportSheet({
                       : "border-brand-50 bg-white"
                   }`}
                 >
-                  <Text className="font-poppins-medium text-sm text-ink-900">
+                  <Text className="font-poppins-medium text-body text-ink-900">
                     {reason}
                   </Text>
-                  {active ? <Check size={16} color={colors.brand600} /> : null}
+                  {active ? <Check size={ICON.sm} color={colors.brand600} /> : null}
                 </Pressable>
               );
             })}
@@ -129,7 +130,7 @@ export function ReportSheet({
               placeholderTextColor={colors.ink300}
               multiline
               maxLength={1500}
-              className="mt-2 min-h-[88px] rounded-2xl border border-brand-100 bg-surface px-4 py-3 font-poppins text-sm text-ink-900"
+              className="mt-2 min-h-[88px] rounded-2xl border border-brand-100 bg-surface px-4 py-3 font-poppins text-body text-ink-900"
               style={{ textAlignVertical: "top" }}
             />
           </ScrollView>
@@ -143,7 +144,7 @@ export function ReportSheet({
             {submitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text className="font-poppins-semibold text-base text-white">
+              <Text className="font-poppins-semibold text-subtitle text-white">
                 Submit report
               </Text>
             )}

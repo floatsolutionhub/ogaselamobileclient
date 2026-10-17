@@ -1,11 +1,13 @@
 import { Headset, MessageCircle, Phone, X } from "lucide-react-native";
 import { useState } from "react";
-import { Linking, Modal, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+import { Modal } from "@/components/ActivityModal";
 import { env } from "@/config/env";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 const WHATSAPP_GREEN = "#25D366";
 
@@ -41,7 +43,7 @@ export function SupportFab() {
           elevation: 8,
         }}
       >
-        <Headset size={24} color={colors.white} />
+        <Headset size={ICON.xl} color={colors.white} />
       </Pressable>
 
       <Modal
@@ -67,7 +69,7 @@ export function SupportFab() {
             style={{ paddingBottom: Math.max(insets.bottom, 16) + 8 }}
           >
             <View className="mb-1 flex-row items-center justify-between">
-              <Text className="font-poppins-semibold text-lg text-ink-900">
+              <Text className="font-poppins-semibold text-title text-ink-900">
                 Need help?
               </Text>
               <Pressable
@@ -75,16 +77,16 @@ export function SupportFab() {
                 hitSlop={10}
                 className="h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
-                <X size={18} color={colors.ink700} />
+                <X size={ICON.md} color={colors.ink700} />
               </Pressable>
             </View>
-            <Text className="mb-4 font-poppins text-sm text-ink-500">
+            <Text className="mb-4 font-poppins text-body text-ink-500">
               Reach the Ogasela support team on any of these channels.
             </Text>
 
             {whatsappUrl ? (
               <ChannelRow
-                icon={<MessageCircle size={20} color={colors.white} />}
+                icon={<MessageCircle size={ICON.lg} color={colors.white} />}
                 iconBackground={WHATSAPP_GREEN}
                 title="Chat on WhatsApp"
                 subtitle="Usually the fastest way to reach us"
@@ -93,7 +95,7 @@ export function SupportFab() {
             ) : null}
             {phone ? (
               <ChannelRow
-                icon={<Phone size={20} color={colors.white} />}
+                icon={<Phone size={ICON.lg} color={colors.white} />}
                 iconBackground={colors.brand600}
                 title="Call support"
                 subtitle={phone}
@@ -106,8 +108,8 @@ export function SupportFab() {
               />
             ) : null}
             {!whatsappUrl && !phone ? (
-              <Text className="rounded-2xl bg-surface p-4 text-center font-poppins text-sm text-ink-500">
-                Support contacts aren't set up yet.
+              <Text className="rounded-2xl bg-surface p-4 text-center font-poppins text-body text-ink-500">
+                Support contacts aren’t set up yet.
               </Text>
             ) : null}
           </View>
@@ -143,10 +145,10 @@ function ChannelRow({
         {icon}
       </View>
       <View className="flex-1">
-        <Text className="font-poppins-semibold text-sm text-ink-900">
+        <Text className="font-poppins-semibold text-body text-ink-900">
           {title}
         </Text>
-        <Text className="font-poppins text-xs text-ink-500">{subtitle}</Text>
+        <Text className="font-poppins text-caption text-ink-500">{subtitle}</Text>
       </View>
     </Pressable>
   );

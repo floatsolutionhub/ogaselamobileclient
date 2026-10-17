@@ -28,6 +28,7 @@ import * as listingsService from "@/services/listings";
 import { colors } from "@/theme/colors";
 import type { Listing, ListingStatus } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { ICON } from "@/theme/typography";
 
 type TabKey = "active" | "draft" | "pending" | "expired";
 
@@ -140,9 +141,9 @@ export default function MyAdsScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">My ads</Text>
+        <Text className="font-poppins-bold text-display text-ink-900">My ads</Text>
       </View>
 
       <View className="mx-6 mt-3 flex-row rounded-2xl border border-brand-50 bg-white p-1">
@@ -159,7 +160,7 @@ export default function MyAdsScreen() {
               }`}
             >
               <Text
-                className={`font-poppins-medium text-xs ${selected ? "text-white" : "text-ink-700"}`}
+                className={`font-poppins-medium text-caption ${selected ? "text-white" : "text-ink-700"}`}
               >
                 {t.label}
               </Text>
@@ -170,7 +171,7 @@ export default function MyAdsScreen() {
                   }`}
                 >
                   <Text
-                    className={`font-poppins-semibold text-[10px] ${
+                    className={`font-poppins-semibold text-micro ${
                       selected ? "text-white" : "text-brand-700"
                     }`}
                   >
@@ -189,14 +190,14 @@ export default function MyAdsScreen() {
         <ActivityIndicator color={colors.brand600} style={{ marginTop: 40 }} />
       ) : error ? (
         <View className="mt-10 items-center px-8">
-          <Text className="text-center font-poppins text-sm text-ink-500">
+          <Text className="text-center font-poppins text-body text-ink-500">
             {error}
           </Text>
           <Pressable
             onPress={() => load()}
             className="mt-3 rounded-full bg-brand-50 px-4 py-2"
           >
-            <Text className="font-poppins-medium text-xs text-brand-700">
+            <Text className="font-poppins-medium text-caption text-brand-700">
               Try again
             </Text>
           </Pressable>
@@ -293,17 +294,17 @@ function MyAdCard({
           />
         ) : (
           <View className="h-20 w-20 items-center justify-center rounded-xl bg-brand-50">
-            <ImageOff size={20} color={colors.ink300} />
+            <ImageOff size={ICON.lg} color={colors.ink300} />
           </View>
         )}
         <View className="flex-1 justify-center">
           <Text
-            className="font-poppins-semibold text-sm text-ink-900"
+            className="font-poppins-semibold text-body text-ink-900"
             numberOfLines={2}
           >
             {listing.title}
           </Text>
-          <Text className="mt-0.5 font-poppins-semibold text-sm text-brand-700">
+          <Text className="mt-0.5 font-poppins-semibold text-body text-brand-700">
             {listing.price !== null
               ? formatNaira(listing.price)
               : "Price on request"}
@@ -311,12 +312,12 @@ function MyAdCard({
           <View className="mt-1 flex-row items-center gap-1">
             {listing.status === "PendingReview" || expiringSoon ? (
               <Clock
-                size={12}
+                size={ICON.xs}
                 color={expiringSoon ? colors.gold700 : colors.ink500}
               />
             ) : null}
             <Text
-              className={`flex-1 font-poppins text-[11px] ${expiringSoon ? "text-gold-700" : "text-ink-500"}`}
+              className={`flex-1 font-poppins text-micro ${expiringSoon ? "text-gold-700" : "text-ink-500"}`}
               numberOfLines={1}
             >
               {statusLine(listing)}
@@ -328,11 +329,11 @@ function MyAdCard({
       {rejected ? (
         <View className="mt-3 flex-row gap-2 rounded-xl bg-danger/5 p-3">
           <AlertCircle
-            size={14}
+            size={ICON.sm}
             color={colors.danger}
             style={{ marginTop: 2 }}
           />
-          <Text className="flex-1 font-poppins text-xs text-ink-700">
+          <Text className="flex-1 font-poppins text-caption text-ink-700">
             <Text className="font-poppins-semibold text-danger">
               Not approved:{" "}
             </Text>
@@ -349,8 +350,8 @@ function MyAdCard({
               accessibilityRole="button"
               className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-brand-100 py-2.5"
             >
-              <Pencil size={14} color={colors.ink700} />
-              <Text className="font-poppins-semibold text-sm text-ink-700">Continue editing</Text>
+              <Pencil size={ICON.sm} color={colors.ink700} />
+              <Text className="font-poppins-semibold text-body text-ink-700">Continue editing</Text>
             </Pressable>
           ) : null}
           <Pressable
@@ -358,8 +359,8 @@ function MyAdCard({
             accessibilityRole="button"
             className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-brand-600 py-2.5"
           >
-            <Rocket size={14} color={colors.white} />
-            <Text className="font-poppins-semibold text-sm text-white">
+            <Rocket size={ICON.sm} color={colors.white} />
+            <Text className="font-poppins-semibold text-body text-white">
               {rejected ? "Resubmit" : "Pay & submit"}
             </Text>
           </Pressable>
@@ -373,9 +374,9 @@ function EmptyState({ text }: { text: string }) {
   return (
     <View className="mt-10 items-center px-8">
       <View className="h-14 w-14 items-center justify-center rounded-full bg-brand-50">
-        <Megaphone size={22} color={colors.brand600} />
+        <Megaphone size={ICON.lg} color={colors.brand600} />
       </View>
-      <Text className="mt-3 text-center font-poppins text-sm text-ink-500">
+      <Text className="mt-3 text-center font-poppins text-body text-ink-500">
         {text}
       </Text>
     </View>

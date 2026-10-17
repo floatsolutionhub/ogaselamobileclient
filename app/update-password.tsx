@@ -62,8 +62,8 @@ export default function UpdatePasswordScreen() {
             isSubmitting,
           }) => (
             <View className="rounded-3xl border border-brand-50 bg-white p-5">
-              <Text className="mb-4 font-poppins text-xs text-ink-500">
-                Use at least 8 characters. You'll stay signed in on this
+              <Text className="mb-4 font-poppins text-caption text-ink-500">
+                Use at least 8 characters. You’ll stay signed in on this
                 device.
               </Text>
               <FormField

@@ -93,7 +93,7 @@ export function CategoryCard({ category, width, onPress }: CategoryCardProps) {
           )}
         </View>
         <Text
-          className="font-poppins-medium text-[11px] leading-[14px] text-ink-900"
+          className="font-poppins-medium text-micro leading-[14px] text-ink-900"
           style={{ width: "100%", textAlign: "center" }}
           numberOfLines={2}
         >

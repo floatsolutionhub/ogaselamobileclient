@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /** Back button + title row used at the top of the Settings sub-screens. */
 export function ScreenHeader({ title }: { title: string }) {
@@ -16,9 +17,9 @@ export function ScreenHeader({ title }: { title: string }) {
         accessibilityLabel="Back"
         className="h-10 w-10 items-center justify-center rounded-full bg-white"
       >
-        <ChevronLeft size={20} color={colors.ink700} />
+        <ChevronLeft size={ICON.lg} color={colors.ink700} />
       </Pressable>
-      <Text className="font-poppins-bold text-2xl text-ink-900">{title}</Text>
+      <Text className="font-poppins-bold text-display text-ink-900">{title}</Text>
     </View>
   );
 }

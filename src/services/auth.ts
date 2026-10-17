@@ -60,12 +60,19 @@ export function confirmPasswordReset(
   });
 }
 
+/**
+ * maskedEmail/maskedPhone: where the code went (empty if it wasn't sent there).
+ * verificationRequired: the email/phone they signed in with isn't verified yet - the code went
+ * only there, and entering it verifies it and finishes signing in.
+ */
 export interface LoginOtpSentResponse {
   maskedEmail: string;
   maskedPhone: string;
+  verificationRequired: boolean;
+  channel: "Email" | "Phone";
 }
 
-/** Step 1: phone-or-email + password. No tokens yet - a 6-digit code has been sent to the account's phone (and email, if it has one); complete sign-in with verifyLoginOtp. Exactly one of phone/email must be provided, the other should be null. */
+/** Step 1: phone-or-email + password. No tokens yet - a 6-digit code has been sent to the identifier used (and the other contact too, if verified); complete sign-in with verifyLoginOtp. Exactly one of phone/email must be provided, the other should be null. */
 export function login(credentials: {
   phone?: string | null;
   email?: string | null;

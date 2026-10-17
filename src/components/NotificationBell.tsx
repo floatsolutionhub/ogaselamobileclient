@@ -5,6 +5,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { getUnreadCount } from "@/services/inbox";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -46,10 +47,10 @@ export function NotificationBell() {
       }
       className="h-10 w-10 items-center justify-center rounded-full border border-brand-100 bg-white"
     >
-      <Bell size={18} color={colors.ink700} />
+      <Bell size={ICON.md} color={colors.ink700} />
       {unread > 0 ? (
-        <View className="absolute -right-1 -top-1 h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-danger px-1">
-          <Text className="font-poppins-semibold text-[10px] text-white">
+        <View className="absolute -right-1.5 -top-1.5 h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-white bg-danger px-1">
+          <Text className="font-poppins-semibold text-micro text-white">
             {label}
           </Text>
         </View>

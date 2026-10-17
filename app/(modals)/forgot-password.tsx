@@ -18,6 +18,7 @@ import { ApiError } from "@/lib/apiClient";
 import * as authService from "@/services/auth";
 import { colors } from "@/theme/colors";
 import { forgotPasswordSchema } from "@/utils/validation";
+import { ICON } from "@/theme/typography";
 
 type Channel = authService.PasswordResetChannel;
 
@@ -28,11 +29,11 @@ export default function ForgotPasswordSheet() {
   return (
     <SheetScreen>
       <View className="items-center">
-        <Text className="font-poppins-bold text-xl text-ink-900">
+        <Text className="font-poppins-bold text-heading text-ink-900">
           Reset your password
         </Text>
-        <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
-          Choose how you'd like to receive your 6-digit reset code.
+        <Text className="mt-1 text-center font-poppins text-body text-ink-500">
+          Choose how you’d like to receive your 6-digit reset code.
         </Text>
       </View>
 
@@ -92,7 +93,7 @@ export default function ForgotPasswordSheet() {
           touched,
         }) => (
           <View className="mt-6">
-            <Text className="mb-2 font-poppins-medium text-sm text-ink-700">
+            <Text className="mb-2 font-poppins-medium text-body text-ink-700">
               Send my code by
             </Text>
             <View className="mb-5 flex-row gap-3">
@@ -169,7 +170,7 @@ export default function ForgotPasswordSheet() {
       </Formik>
 
       <Text
-        className="mb-4 mt-6 text-center font-poppins-semibold text-sm text-brand-600"
+        className="mb-4 mt-6 text-center font-poppins-semibold text-body text-brand-600"
         onPress={() =>
           router.replace({
             pathname: "/(modals)/sign-in",
@@ -211,14 +212,14 @@ function ChannelOption({
             active ? "bg-brand-600" : "bg-surface"
           }`}
         >
-          <Icon size={18} color={active ? colors.white : colors.ink700} />
+          <Icon size={ICON.md} color={active ? colors.white : colors.ink700} />
         </View>
-        {active ? <Check size={16} color={colors.brand600} /> : null}
+        {active ? <Check size={ICON.sm} color={colors.brand600} /> : null}
       </View>
-      <Text className="mt-3 font-poppins-semibold text-sm text-ink-900">
+      <Text className="mt-3 font-poppins-semibold text-body text-ink-900">
         {label}
       </Text>
-      <Text className="font-poppins text-xs text-ink-500">{hint}</Text>
+      <Text className="font-poppins text-caption text-ink-500">{hint}</Text>
     </Pressable>
   );
 }

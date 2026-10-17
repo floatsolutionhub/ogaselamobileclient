@@ -63,9 +63,9 @@ export default function FavouritesScreen() {
   return (
     <GradientScreen scroll={false}>
       <View className="px-6 pt-6">
-        <Text className="font-poppins-bold text-2xl text-ink-900">Favourites</Text>
-        <Text className="mt-1 font-poppins text-sm text-ink-500">
-          Listings you've saved for later
+        <Text className="font-poppins-bold text-display text-ink-900">Favourites</Text>
+        <Text className="mt-1 font-poppins text-body text-ink-500">
+          Listings you’ve saved for later
         </Text>
       </View>
 
@@ -82,8 +82,8 @@ export default function FavouritesScreen() {
           ListEmptyComponent={
             <View className="mt-16 items-center px-10">
               <Heart size={40} color={colors.brand200} />
-              <Text className="mt-4 text-center font-poppins-medium text-sm text-ink-500">
-                You haven't saved any listings yet. Tap the heart on a listing to
+              <Text className="mt-4 text-center font-poppins-medium text-body text-ink-500">
+                You haven’t saved any listings yet. Tap the heart on a listing to
                 add it here.
               </Text>
             </View>

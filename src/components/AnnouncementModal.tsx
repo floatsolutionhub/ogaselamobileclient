@@ -4,7 +4,6 @@ import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   Image,
-  Modal,
   Pressable,
   Text,
   useWindowDimensions,
@@ -17,7 +16,9 @@ import {
   markAnnouncementRead,
   type Announcement,
 } from "@/services/announcements";
+import { Modal } from "@/components/ActivityModal";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /**
  * Pops up the newest active announcement this device hasn't closed yet. Closing it (the X, or
@@ -93,15 +94,15 @@ export function AnnouncementModal({ enabled }: { enabled: boolean }) {
               accessibilityLabel="Close"
               className="absolute right-3 top-3 h-9 w-9 items-center justify-center rounded-full bg-white/90"
             >
-              <X size={18} color={colors.ink900} />
+              <X size={ICON.md} color={colors.ink900} />
             </Pressable>
           </View>
 
           <View className="p-5">
-            <Text className="font-poppins-bold text-lg text-ink-900">
+            <Text className="font-poppins-bold text-title text-ink-900">
               {announcement.title}
             </Text>
-            <Text className="mt-1.5 font-poppins text-sm leading-5 text-ink-700">
+            <Text className="mt-1.5 font-poppins text-body leading-5 text-ink-700">
               {announcement.caption}
             </Text>
 
@@ -111,7 +112,7 @@ export function AnnouncementModal({ enabled }: { enabled: boolean }) {
                 accessibilityRole="button"
                 className="mt-5 items-center rounded-2xl bg-brand-600 py-3.5 active:opacity-90"
               >
-                <Text className="font-poppins-semibold text-sm text-white">
+                <Text className="font-poppins-semibold text-body text-white">
                   {announcement.cta.label}
                 </Text>
               </Pressable>

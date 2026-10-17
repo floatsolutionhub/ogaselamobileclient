@@ -17,6 +17,7 @@ import type {
   VerificationTrack,
 } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 const COPY = {
   personal: {
@@ -77,8 +78,8 @@ export function VerificationBadge({
   if (track.status === "Verified") {
     return (
       <View className="flex-row items-center gap-2 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-2.5">
-        <BadgeCheck size={18} color={colors.brand600} />
-        <Text className="flex-1 font-poppins-semibold text-sm text-brand-700">
+        <BadgeCheck size={ICON.md} color={colors.brand600} />
+        <Text className="flex-1 font-poppins-semibold text-body text-brand-700">
           {copy.verifiedTitle}
         </Text>
       </View>
@@ -96,11 +97,11 @@ export function VerificationBadge({
       }`}
     >
       <View className="pt-0.5">
-        <Icon size={20} color={pending ? colors.brand600 : colors.gold700} />
+        <Icon size={ICON.lg} color={pending ? colors.brand600 : colors.gold700} />
       </View>
       <View className="flex-1">
         <View className="flex-row items-center justify-between gap-2">
-          <Text className="flex-shrink font-poppins-semibold text-sm text-ink-900">
+          <Text className="flex-shrink font-poppins-semibold text-body text-ink-900">
             {pending ? copy.pendingTitle : copy.title}
           </Text>
           <Pressable
@@ -112,7 +113,7 @@ export function VerificationBadge({
             }`}
           >
             <Text
-              className={`font-poppins-semibold text-xs ${
+              className={`font-poppins-semibold text-caption ${
                 pending ? "text-white" : "text-ink-900"
               }`}
             >
@@ -121,10 +122,10 @@ export function VerificationBadge({
           </Pressable>
         </View>
         {note ? (
-          <Text className="mt-1 font-poppins text-xs text-ink-700">{note}</Text>
+          <Text className="mt-1 font-poppins text-caption text-ink-700">{note}</Text>
         ) : null}
         {!pending && outstanding.length > 0 ? (
-          <Text className="mt-0.5 font-poppins text-xs text-ink-500">
+          <Text className="mt-0.5 font-poppins text-caption text-ink-500">
             Awaiting {joinLabels(outstanding)} upload
           </Text>
         ) : null}
@@ -139,8 +140,8 @@ export function VerificationBadge({
                   accessibilityLabel={`${ITEM_LABELS[item.key]}: ${style.label}`}
                   className={`flex-row items-center gap-1 rounded-full px-2 py-1 ${style.chip}`}
                 >
-                  <style.Icon size={11} color={style.color} strokeWidth={2.5} />
-                  <Text className="font-poppins-medium text-[10px] text-ink-700">
+                  <style.Icon size={ICON.xs} color={style.color} strokeWidth={2.5} />
+                  <Text className="font-poppins-medium text-micro text-ink-700">
                     {ITEM_LABELS[item.key]}
                   </Text>
                 </View>

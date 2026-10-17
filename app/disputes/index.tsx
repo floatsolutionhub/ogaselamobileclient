@@ -21,6 +21,7 @@ import {
 } from "@/services/disputes";
 import { DISPUTE_STATUS_STYLE } from "@/utils/disputes";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 export default function MyDisputesScreen() {
   useProtectedRoute("/disputes");
@@ -56,9 +57,9 @@ export default function MyDisputesScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Disputes
         </Text>
       </View>
@@ -88,12 +89,12 @@ export default function MyDisputesScreen() {
           ListEmptyComponent={
             <View className="items-center rounded-3xl border border-brand-50 bg-white px-6 py-10">
               <View className="h-14 w-14 items-center justify-center rounded-full bg-brand-50">
-                <Scale size={24} color={colors.brand600} />
+                <Scale size={ICON.xl} color={colors.brand600} />
               </View>
-              <Text className="mt-3 font-poppins-semibold text-base text-ink-900">
+              <Text className="mt-3 font-poppins-semibold text-subtitle text-ink-900">
                 No disputes
               </Text>
-              <Text className="mt-1 text-center font-poppins text-xs text-ink-500">
+              <Text className="mt-1 text-center font-poppins text-caption text-ink-500">
                 If a deal goes wrong, open a dispute from the ad or your chat
                 with the other person.
               </Text>
@@ -121,23 +122,23 @@ export default function MyDisputesScreen() {
                 )}
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2">
-                    <Text className="font-poppins-semibold text-sm text-ink-900">
+                    <Text className="font-poppins-semibold text-body text-ink-900">
                       {item.reference}
                     </Text>
                     <Text
-                      className={`rounded-full px-2 py-0.5 font-poppins-medium text-[10px] ${status.className}`}
+                      className={`rounded-full px-2 py-0.5 font-poppins-medium text-micro ${status.className}`}
                     >
                       {status.label}
                     </Text>
                   </View>
                   <Text
-                    className="font-poppins text-xs text-ink-700"
+                    className="font-poppins text-caption text-ink-700"
                     numberOfLines={1}
                   >
                     {item.listingTitle}
                   </Text>
                   <Text
-                    className="font-poppins text-[11px] text-ink-500"
+                    className="font-poppins text-micro text-ink-500"
                     numberOfLines={1}
                   >
                     {DISPUTE_REASON_LABELS[item.reason]} ·{" "}
@@ -145,7 +146,7 @@ export default function MyDisputesScreen() {
                     {item.otherPartyName} · {moment(item.createdAt).fromNow()}
                   </Text>
                 </View>
-                <ChevronRight size={16} color={colors.ink300} />
+                <ChevronRight size={ICON.sm} color={colors.ink300} />
               </Pressable>
             );
           }}

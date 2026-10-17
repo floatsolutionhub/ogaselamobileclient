@@ -39,6 +39,29 @@ module.exports = {
         danger: "#E4483C",
         success: "#12B76A",
       },
+      /**
+       * The app's type scale (src/theme/typography.ts mirrors it for style props). Use these
+       * role names - micro, caption, body, subtitle, title, heading, display, hero - rather than
+       * Tailwind's xs/sm/base. Those defaults are mapped onto the same scale below, so a stray
+       * one still lands on a size from it.
+       */
+      fontSize: {
+        micro: ["12px", { lineHeight: "16px" }],
+        caption: ["13px", { lineHeight: "18px" }],
+        body: ["15px", { lineHeight: "22px" }],
+        subtitle: ["17px", { lineHeight: "24px" }],
+        title: ["19px", { lineHeight: "26px" }],
+        heading: ["22px", { lineHeight: "28px" }],
+        display: ["26px", { lineHeight: "32px" }],
+        hero: ["30px", { lineHeight: "36px" }],
+        xs: ["13px", { lineHeight: "18px" }],
+        sm: ["15px", { lineHeight: "22px" }],
+        base: ["17px", { lineHeight: "24px" }],
+        lg: ["19px", { lineHeight: "26px" }],
+        xl: ["22px", { lineHeight: "28px" }],
+        "2xl": ["26px", { lineHeight: "32px" }],
+        "3xl": ["30px", { lineHeight: "36px" }],
+      },
       fontFamily: {
         poppins: ["Poppins_400Regular"],
         "poppins-medium": ["Poppins_500Medium"],

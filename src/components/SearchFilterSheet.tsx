@@ -2,7 +2,6 @@ import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -13,8 +12,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Modal } from "@/components/ActivityModal";
 import { colors } from "@/theme/colors";
 import type { ListingCondition, SearchSort } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 export type SearchFilterValues = {
   sort: SearchSort;
@@ -151,11 +152,11 @@ export function SearchFilterSheet({
           }}
         >
           <View className="mb-2 flex-row items-center justify-between px-6">
-            <Text className="font-poppins-semibold text-lg text-ink-900">
+            <Text className="font-poppins-semibold text-title text-ink-900">
               Filters
             </Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <X size={20} color={colors.ink500} />
+              <X size={ICON.lg} color={colors.ink500} />
             </Pressable>
           </View>
 
@@ -179,7 +180,7 @@ export function SearchFilterSheet({
             </FilterGroup>
 
             <View className="mt-5">
-              <Text className="mb-2 font-poppins-semibold text-sm text-ink-900">
+              <Text className="mb-2 font-poppins-semibold text-body text-ink-900">
                 Price (₦)
               </Text>
               <View className="flex-row items-center gap-3">
@@ -196,7 +197,7 @@ export function SearchFilterSheet({
                 />
               </View>
               {priceError ? (
-                <Text className="mt-1 font-poppins text-xs text-danger">
+                <Text className="mt-1 font-poppins text-caption text-danger">
                   {priceError}
                 </Text>
               ) : null}
@@ -232,10 +233,10 @@ export function SearchFilterSheet({
 
             <View className="mt-5 flex-row items-center justify-between rounded-2xl border border-brand-50 bg-surface px-4 py-3">
               <View className="mr-3 flex-1">
-                <Text className="font-poppins-semibold text-sm text-ink-900">
+                <Text className="font-poppins-semibold text-body text-ink-900">
                   Verified sellers only
                 </Text>
-                <Text className="font-poppins text-xs text-ink-500">
+                <Text className="font-poppins text-caption text-ink-500">
                   Sellers who completed identity verification
                 </Text>
               </View>
@@ -255,7 +256,7 @@ export function SearchFilterSheet({
               onPress={reset}
               className="flex-1 items-center justify-center rounded-2xl border border-brand-100 py-4"
             >
-              <Text className="font-poppins-semibold text-base text-ink-700">
+              <Text className="font-poppins-semibold text-subtitle text-ink-700">
                 Reset
               </Text>
             </Pressable>
@@ -265,7 +266,7 @@ export function SearchFilterSheet({
               className="flex-[2] items-center justify-center rounded-2xl bg-brand-600 py-4"
               style={{ opacity: priceError ? 0.5 : 1 }}
             >
-              <Text className="font-poppins-semibold text-base text-white">
+              <Text className="font-poppins-semibold text-subtitle text-white">
                 Show results
               </Text>
             </Pressable>
@@ -285,7 +286,7 @@ function FilterGroup({
 }) {
   return (
     <View className="mt-5">
-      <Text className="mb-2 font-poppins-semibold text-sm text-ink-900">
+      <Text className="mb-2 font-poppins-semibold text-body text-ink-900">
         {title}
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -312,7 +313,7 @@ function Chip({
       }`}
     >
       <Text
-        className={`font-poppins-medium text-xs ${active ? "text-white" : "text-ink-700"}`}
+        className={`font-poppins-medium text-caption ${active ? "text-white" : "text-ink-700"}`}
       >
         {label}
       </Text>
@@ -337,7 +338,7 @@ function PriceInput({
       placeholderTextColor={colors.ink300}
       keyboardType="number-pad"
       maxLength={12}
-      className="flex-1 rounded-2xl border border-brand-100 bg-surface px-4 py-3 font-poppins text-sm text-ink-900"
+      className="flex-1 rounded-2xl border border-brand-100 bg-surface px-4 py-3 font-poppins text-body text-ink-900"
     />
   );
 }

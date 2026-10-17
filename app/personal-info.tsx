@@ -39,6 +39,7 @@ import { ApiError } from "@/lib/apiClient";
 import * as meService from "@/services/me";
 import type { UserDocument, UserDocumentType } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 export default function PersonalInfoScreen() {
   useProtectedRoute("/personal-info");
@@ -54,6 +55,7 @@ export default function PersonalInfoScreen() {
   const [viewing, setViewing] = useState<{
     document: UserDocument;
     title: string;
+    note?: string;
   } | null>(null);
 
   // Only when the saved name itself changes - refreshUser() on every focus hands back a new user
@@ -118,11 +120,16 @@ export default function PersonalInfoScreen() {
     (hasSelfie && !documentsLoading && missingDocuments.length === 0);
 
   const openDocument = (type: UserDocumentType, title: string) => {
+    const document = latest(type);
+    // One submission per document at a time: a pending one opens read-only until it's reviewed.
+    if (document?.status === "PendingReview") {
+      setViewing({ document, title, note: "This document is waiting for review. You can upload a new one once it’s approved or rejected." });
+      return;
+    }
     if (!isVerified) {
       setUploading(type);
       return;
     }
-    const document = latest(type);
     if (document) setViewing({ document, title });
   };
 
@@ -144,9 +151,9 @@ export default function PersonalInfoScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Personal Info
         </Text>
       </View>
@@ -183,11 +190,11 @@ export default function PersonalInfoScreen() {
             )}
             {photoLocked ? null : (
               <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand-600">
-                <Camera size={16} color={colors.white} />
+                <Camera size={ICON.sm} color={colors.white} />
               </View>
             )}
           </Pressable>
-          <Text className="mt-3 font-poppins-semibold text-base text-ink-900">
+          <Text className="mt-3 font-poppins-semibold text-subtitle text-ink-900">
             Profile photo
           </Text>
           {hasSelfie && !isVerified && documentsLoading ? null : (
@@ -199,11 +206,11 @@ export default function PersonalInfoScreen() {
               }`}
             >
               {isVerified ? (
-                <BadgeCheck size={18} color={colors.brand600} />
+                <BadgeCheck size={ICON.md} color={colors.brand600} />
               ) : (
-                <ScanFace size={18} color={colors.gold700} />
+                <ScanFace size={ICON.md} color={colors.gold700} />
               )}
-              <Text className="flex-shrink font-poppins-medium text-xs text-ink-900">
+              <Text className="flex-shrink font-poppins-medium text-caption text-ink-900">
                 {photoCaption}
               </Text>
             </View>
@@ -212,7 +219,7 @@ export default function PersonalInfoScreen() {
 
         {/* Basic information */}
         <View className="rounded-3xl border border-brand-50 bg-white p-5">
-          <Text className="mb-4 font-poppins-semibold text-base text-ink-900">
+          <Text className="mb-4 font-poppins-semibold text-subtitle text-ink-900">
             Basic information
           </Text>
           <FormField
@@ -232,7 +239,7 @@ export default function PersonalInfoScreen() {
             label="Phone number"
             value={user?.phone}
           />
-          <Text className="mb-4 font-poppins text-[11px] text-ink-500">
+          <Text className="mb-4 font-poppins text-micro text-ink-500">
             To change your email or phone, go to Settings - changes are
             reviewed before they take effect.
           </Text>
@@ -246,7 +253,7 @@ export default function PersonalInfoScreen() {
             {saving ? (
               <ActivityIndicator color={colors.white} />
             ) : (
-              <Text className="font-poppins-semibold text-base text-white">
+              <Text className="font-poppins-semibold text-subtitle text-white">
                 Save changes
               </Text>
             )}
@@ -256,10 +263,10 @@ export default function PersonalInfoScreen() {
         {/* Documents */}
         <View className="overflow-hidden rounded-3xl border border-brand-50 bg-white">
           <View className="px-5 pb-2 pt-5">
-            <Text className="font-poppins-semibold text-base text-ink-900">
+            <Text className="font-poppins-semibold text-subtitle text-ink-900">
               Documents
             </Text>
-            <Text className="mt-0.5 font-poppins text-xs text-ink-500">
+            <Text className="mt-0.5 font-poppins text-caption text-ink-500">
               {isVerified
                 ? "Verified - tap a document to view it."
                 : "Upload your ID and proof of address. Our team reviews them."}
@@ -304,6 +311,7 @@ export default function PersonalInfoScreen() {
       <DocumentDetailSheet
         document={viewing?.document ?? null}
         title={viewing?.title ?? ""}
+        lockNote={viewing?.note}
         onClose={() => setViewing(null)}
       />
     </SafeAreaView>
@@ -321,18 +329,18 @@ function ReadOnlyField({
 }) {
   return (
     <View className="mb-4">
-      <Text className="mb-1.5 font-poppins-medium text-sm text-ink-700">
+      <Text className="mb-1.5 font-poppins-medium text-body text-ink-700">
         {label}
       </Text>
       <View className="flex-row items-center rounded-2xl border border-brand-50 bg-surface px-4 py-3.5">
-        <Icon size={18} color={colors.ink300} style={{ marginRight: 10 }} />
+        <Icon size={ICON.md} color={colors.ink300} style={{ marginRight: 10 }} />
         <Text
-          className="flex-1 font-poppins text-base text-ink-500"
+          className="flex-1 font-poppins text-subtitle text-ink-500"
           numberOfLines={1}
         >
           {value || "Not set"}
         </Text>
-        <Lock size={14} color={colors.ink300} />
+        <Lock size={ICON.sm} color={colors.ink300} />
       </View>
     </View>
   );

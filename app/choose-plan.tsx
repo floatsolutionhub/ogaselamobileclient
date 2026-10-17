@@ -1,4 +1,3 @@
-import * as WebBrowser from "expo-web-browser";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Check,
@@ -30,6 +29,8 @@ import * as walletService from "@/services/wallet";
 import { colors } from "@/theme/colors";
 import type { Listing, PromotionPlan } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { openCheckout } from "@/utils/payments";
+import { ICON } from "@/theme/typography";
 
 /** Plan prices and wallet balances are in kobo. */
 const fromKobo = (kobo: number) => formatNaira(Math.round(kobo) / 100);
@@ -166,6 +167,30 @@ export default function ChoosePlanScreen() {
     }
   };
 
+  /** The payment page was closed without finishing - cancelled, unless the gateway says otherwise. */
+  const cancel = async (reference: string) => {
+    setPaying("Checking your payment...");
+    try {
+      const result = await listingsService.cancelCheckout(listingId, reference);
+      if (result.outcome === "Submitted") {
+        finish(result);
+      } else if (result.outcome === "PaymentPending") {
+        // Genuinely in progress at the bank (e.g. a transfer) - keep waiting for the webhook.
+        setPendingReference(reference);
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "Payment cancelled",
+          text2: "Nothing was charged. Your ad is saved as a draft - pay whenever you're ready.",
+        });
+      }
+    } catch {
+      Toast.show({ type: "error", text1: "Payment cancelled", text2: "Nothing was charged." });
+    } finally {
+      loadWallet();
+    }
+  };
+
   const pay = async () => {
     if (!listing || !selected) return;
     setPaying(isFree ? "Submitting your ad..." : "Starting payment...");
@@ -177,7 +202,11 @@ export default function ChoosePlanScreen() {
       }
       if (result.outcome === "PaymentRequired" && result.redirectUrl && result.paymentReference) {
         setPaying("Waiting for payment...");
-        await WebBrowser.openBrowserAsync(result.redirectUrl);
+        const returned = await openCheckout(result.redirectUrl);
+        if (returned === "closed") {
+          await cancel(result.paymentReference);
+          return;
+        }
         await confirm(result.paymentReference);
       }
     } catch (error) {
@@ -206,12 +235,12 @@ export default function ChoosePlanScreen() {
             accessibilityLabel="Back"
             className="h-10 w-10 items-center justify-center rounded-full bg-white"
           >
-            <ChevronLeft size={20} color={colors.ink700} />
+            <ChevronLeft size={ICON.lg} color={colors.ink700} />
           </Pressable>
           <View className="flex-1">
-            <Text className="font-poppins-bold text-2xl text-ink-900">Promote & pay</Text>
+            <Text className="font-poppins-bold text-display text-ink-900">Promote & pay</Text>
             {listing ? (
-              <Text className="font-poppins text-xs text-ink-500" numberOfLines={1}>
+              <Text className="font-poppins text-caption text-ink-500" numberOfLines={1}>
                 for “{listing.title}”
               </Text>
             ) : null}
@@ -223,13 +252,13 @@ export default function ChoosePlanScreen() {
       {loading ? (
         <ActivityIndicator color={colors.brand600} style={{ marginTop: 40 }} />
       ) : !listing ? (
-        <Text className="px-6 pt-6 text-center font-poppins text-sm text-ink-500">This ad could not be found.</Text>
+        <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">This ad could not be found.</Text>
       ) : listing.status !== "Draft" ? (
-        <Text className="px-6 pt-6 text-center font-poppins text-sm text-ink-500">
+        <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">
           This ad has already been paid for and submitted.
         </Text>
       ) : plans.length === 0 ? (
-        <Text className="px-6 pt-6 text-center font-poppins text-sm text-ink-500">
+        <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">
           No plans are available right now. Your ad is saved as a draft - try again later.
         </Text>
       ) : (
@@ -237,15 +266,15 @@ export default function ChoosePlanScreen() {
           <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 12, gap: 12 }}>
             {pendingReference ? (
               <View className="flex-row gap-3 rounded-2xl border border-gold-50 bg-gold-50 p-4">
-                <Clock size={18} color={colors.gold700} />
+                <Clock size={ICON.md} color={colors.gold700} />
                 <View className="flex-1">
-                  <Text className="font-poppins-semibold text-sm text-gold-700">Confirming your payment</Text>
-                  <Text className="mt-0.5 font-poppins text-xs text-ink-700">
+                  <Text className="font-poppins-semibold text-body text-gold-700">Confirming your payment</Text>
+                  <Text className="mt-0.5 font-poppins text-caption text-ink-700">
                     Your bank hasn&apos;t confirmed it yet. We&apos;ll submit your ad for review automatically once it does -
                     you don&apos;t need to pay again.
                   </Text>
                   <Pressable onPress={() => confirm(pendingReference)} disabled={!!paying} className="mt-2 self-start">
-                    <Text className="font-poppins-semibold text-xs text-brand-700">Check again</Text>
+                    <Text className="font-poppins-semibold text-caption text-brand-700">Check again</Text>
                   </Pressable>
                 </View>
               </View>
@@ -253,12 +282,12 @@ export default function ChoosePlanScreen() {
 
             {listing.reviewNote ? (
               <View className="rounded-2xl border border-danger/20 bg-danger/5 p-4">
-                <Text className="font-poppins-semibold text-sm text-danger">Last submission wasn&apos;t approved</Text>
-                <Text className="mt-0.5 font-poppins text-xs text-ink-700">{listing.reviewNote}</Text>
+                <Text className="font-poppins-semibold text-body text-danger">Last submission wasn&apos;t approved</Text>
+                <Text className="mt-0.5 font-poppins text-caption text-ink-700">{listing.reviewNote}</Text>
               </View>
             ) : null}
 
-            <Text className="font-poppins-semibold text-base text-ink-900">1. Choose a promotion plan</Text>
+            <Text className="font-poppins-semibold text-subtitle text-ink-900">1. Choose a promotion plan</Text>
             {plans.map((plan) => {
               const isSelected = plan.id === selectedId;
               return (
@@ -271,34 +300,34 @@ export default function ChoosePlanScreen() {
                 >
                   <View className="flex-row items-start gap-3">
                     <View className="flex-1">
-                      <Text className="font-poppins-semibold text-lg text-ink-900">{plan.name}</Text>
+                      <Text className="font-poppins-semibold text-title text-ink-900">{plan.name}</Text>
                       {plan.description ? (
-                        <Text className="mt-0.5 font-poppins text-xs text-ink-500">{plan.description}</Text>
+                        <Text className="mt-0.5 font-poppins text-caption text-ink-500">{plan.description}</Text>
                       ) : null}
                     </View>
                     <View
                       className={`h-6 w-6 items-center justify-center rounded-full border-2 ${isSelected ? "border-brand-600 bg-brand-600" : "border-ink-300"}`}
                     >
-                      {isSelected ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
+                      {isSelected ? <Check size={ICON.sm} color={colors.white} strokeWidth={3} /> : null}
                     </View>
                   </View>
 
-                  <Text className="mt-3 font-poppins-bold text-2xl text-ink-900">
+                  <Text className="mt-3 font-poppins-bold text-display text-ink-900">
                     {plan.price === 0 ? "Free" : fromKobo(plan.price)}
-                    <Text className="font-poppins text-xs text-ink-500"> · {plan.durationDays} days</Text>
+                    <Text className="font-poppins text-caption text-ink-500"> · {plan.durationDays} days</Text>
                   </Text>
 
                   {plan.features.length > 0 ? (
                     <View className="mt-3 gap-1.5">
                       {plan.features.map((feature) => (
                         <View key={feature} className="flex-row items-start gap-2">
-                          <Check size={15} color={colors.brand600} style={{ marginTop: 2 }} />
-                          <Text className="flex-1 font-poppins text-sm text-ink-700">{feature}</Text>
+                          <Check size={ICON.sm} color={colors.brand600} style={{ marginTop: 2 }} />
+                          <Text className="flex-1 font-poppins text-body text-ink-700">{feature}</Text>
                         </View>
                       ))}
                     </View>
                   ) : (
-                    <Text className="mt-2 font-poppins text-xs text-ink-500">
+                    <Text className="mt-2 font-poppins text-caption text-ink-500">
                       Up to {plan.photoLimit} photos{plan.videoAllowed ? " and a video" : ""}.
                     </Text>
                   )}
@@ -308,7 +337,7 @@ export default function ChoosePlanScreen() {
 
             {selected && !isFree ? (
               <>
-                <Text className="mt-3 font-poppins-semibold text-base text-ink-900">2. How would you like to pay?</Text>
+                <Text className="mt-3 font-poppins-semibold text-subtitle text-ink-900">2. How would you like to pay?</Text>
                 <MethodOption
                   icon={CreditCard}
                   title="Card, bank transfer or USSD"
@@ -333,7 +362,7 @@ export default function ChoosePlanScreen() {
               </>
             ) : null}
 
-            <Text className="mt-2 font-poppins text-xs text-ink-500">
+            <Text className="mt-2 font-poppins text-caption text-ink-500">
               Once {isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review
               before buyers can see it. If it isn&apos;t approved, a paid plan is refunded to your wallet.
             </Text>
@@ -341,7 +370,7 @@ export default function ChoosePlanScreen() {
 
           <View className="gap-2 border-t border-brand-50 bg-white px-6 pb-2 pt-4">
             {paying ? (
-              <Text className="text-center font-poppins text-xs text-ink-500">{paying}</Text>
+              <Text className="text-center font-poppins text-caption text-ink-500">{paying}</Text>
             ) : null}
             <PrimaryButton
               label={buttonLabel}
@@ -353,7 +382,7 @@ export default function ChoosePlanScreen() {
               onPress={() => router.replace({ pathname: "/my-ads", params: { tab: "draft" } })}
               className="items-center py-2"
             >
-              <Text className="font-poppins-medium text-sm text-ink-500">Save as draft for now</Text>
+              <Text className="font-poppins-medium text-body text-ink-500">Save as draft for now</Text>
             </Pressable>
           </View>
         </>
@@ -387,16 +416,16 @@ function MethodOption({
       style={{ opacity: disabled ? 0.5 : 1 }}
     >
       <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-        <Icon size={18} color={colors.brand600} />
+        <Icon size={ICON.md} color={colors.brand600} />
       </View>
       <View className="flex-1">
-        <Text className="font-poppins-semibold text-sm text-ink-900">{title}</Text>
-        <Text className="font-poppins text-xs text-ink-500">{subtitle}</Text>
+        <Text className="font-poppins-semibold text-body text-ink-900">{title}</Text>
+        <Text className="font-poppins text-caption text-ink-500">{subtitle}</Text>
       </View>
       <View
         className={`h-5 w-5 items-center justify-center rounded-full border-2 ${selected ? "border-brand-600 bg-brand-600" : "border-ink-300"}`}
       >
-        {selected ? <Check size={12} color={colors.white} strokeWidth={3} /> : null}
+        {selected ? <Check size={ICON.xs} color={colors.white} strokeWidth={3} /> : null}
       </View>
     </Pressable>
   );

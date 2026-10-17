@@ -28,16 +28,16 @@ export default function PrivacyScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 px-6 pt-4" contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text className="mt-1 mb-6 font-poppins text-xs text-ink-500">
+        <Text className="mt-1 mb-6 font-poppins text-caption text-ink-500">
           Last updated: September 2026
         </Text>
 
         {SECTIONS.map((section) => (
           <View key={section.title} className="mb-5">
-            <Text className="mb-1 font-poppins-semibold text-base text-ink-900">
+            <Text className="mb-1 font-poppins-semibold text-subtitle text-ink-900">
               {section.title}
             </Text>
-            <Text className="font-poppins text-sm leading-6 text-ink-700">
+            <Text className="font-poppins text-body leading-6 text-ink-700">
               {section.body}
             </Text>
           </View>

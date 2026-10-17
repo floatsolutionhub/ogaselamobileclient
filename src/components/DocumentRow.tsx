@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { UserDocument, UserDocumentStatus } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 export const DOCUMENT_STATUS_STYLE: Record<
   UserDocumentStatus,
@@ -37,34 +38,34 @@ export function DocumentRow({
       className={`flex-row items-center gap-3 px-5 py-4 active:bg-brand-50 ${last ? "" : "border-b border-brand-50"}`}
     >
       <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-        <Icon size={18} color={colors.brand600} />
+        <Icon size={ICON.md} color={colors.brand600} />
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-2">
-          <Text className="font-poppins-medium text-sm text-ink-900">
+          <Text className="font-poppins-medium text-body text-ink-900">
             {title}
           </Text>
           {status ? (
             <Text
-              className={`rounded-full px-2 py-0.5 font-poppins-medium text-[10px] ${status.className}`}
+              className={`rounded-full px-2 py-0.5 font-poppins-medium text-micro ${status.className}`}
             >
               {status.label}
             </Text>
           ) : null}
         </View>
-        <Text className="font-poppins text-xs text-ink-500" numberOfLines={1}>
+        <Text className="font-poppins text-caption text-ink-500" numberOfLines={1}>
           {document ? subtitleFor(document) : "Not uploaded - tap to add"}
         </Text>
         {document?.status === "Rejected" && document.reviewNote ? (
           <Text
-            className="mt-0.5 font-poppins text-xs text-danger"
+            className="mt-0.5 font-poppins text-caption text-danger"
             numberOfLines={2}
           >
             {document.reviewNote} Tap to upload again.
           </Text>
         ) : null}
       </View>
-      <ChevronRight size={16} color={colors.ink300} />
+      <ChevronRight size={ICON.sm} color={colors.ink300} />
     </Pressable>
   );
 }

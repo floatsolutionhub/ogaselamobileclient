@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/apiClient";
 import * as notificationsService from "@/services/notifications";
 import { colors } from "@/theme/colors";
 import type { NotificationChannel, NotificationPreferenceInput } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 const CATEGORIES: { key: string; icon: LucideIcon; title: string; description: string }[] = [
   {
@@ -73,7 +74,7 @@ export default function NotificationSettingsScreen() {
       <ScreenHeader title="Notifications" />
 
       <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 12, gap: 20 }}>
-        <Text className="px-1 font-poppins text-xs text-ink-500">
+        <Text className="px-1 font-poppins text-caption text-ink-500">
           Choose how we reach you. Messages, security codes and account notices
           are always sent.
         </Text>
@@ -91,13 +92,13 @@ export default function NotificationSettingsScreen() {
               >
                 <View className="flex-row items-center gap-3 border-b border-brand-50 px-5 py-4">
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-                    <category.icon size={18} color={colors.brand600} />
+                    <category.icon size={ICON.md} color={colors.brand600} />
                   </View>
                   <View className="flex-1">
-                    <Text className="font-poppins-semibold text-sm text-ink-900">
+                    <Text className="font-poppins-semibold text-body text-ink-900">
                       {category.title}
                     </Text>
-                    <Text className="font-poppins text-xs text-ink-500">
+                    <Text className="font-poppins text-caption text-ink-500">
                       {category.description}
                     </Text>
                   </View>
@@ -109,7 +110,7 @@ export default function NotificationSettingsScreen() {
                       index !== rows.length - 1 ? "border-b border-brand-50" : ""
                     }`}
                   >
-                    <Text className="font-poppins-medium text-sm text-ink-700">
+                    <Text className="font-poppins-medium text-body text-ink-700">
                       {CHANNEL_LABELS[pref.channel] ?? pref.channel}
                     </Text>
                     <Switch

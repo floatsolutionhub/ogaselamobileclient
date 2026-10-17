@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 
 import * as messagingService from "@/services/messaging";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /** Shown until the admin-set text loads (or if it can't be fetched). Matches the API's default. */
 const DEFAULT_NOTICE = "Do not send money for an item you have not seen and verified";
@@ -34,8 +35,8 @@ export function ChatSafetyNotice() {
       accessibilityRole="alert"
       className="flex-row items-start gap-2 rounded-xl border border-gold-200 bg-gold-50 px-3 py-2"
     >
-      <ShieldAlert size={16} color={colors.gold700} style={{ marginTop: 1 }} />
-      <Text className="flex-1 font-poppins-medium text-xs text-ink-900">
+      <ShieldAlert size={ICON.sm} color={colors.gold700} style={{ marginTop: 1 }} />
+      <Text className="flex-1 font-poppins-medium text-caption text-ink-900">
         {text}
       </Text>
     </View>

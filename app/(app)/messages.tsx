@@ -104,10 +104,10 @@ export default function MessagesScreen() {
   return (
     <GradientScreen scroll={false}>
       <View className="px-6 pt-6">
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Messages
         </Text>
-        <Text className="mt-1 font-poppins text-sm text-ink-500">
+        <Text className="mt-1 font-poppins text-body text-ink-500">
           Chats with buyers and sellers
         </Text>
       </View>
@@ -143,16 +143,16 @@ export default function MessagesScreen() {
               <View className="flex-1">
                 <View className="flex-row items-center justify-between">
                   <Text
-                    className="mr-2 flex-1 font-poppins-semibold text-sm text-ink-900"
+                    className="mr-2 flex-1 font-poppins-semibold text-body text-ink-900"
                     numberOfLines={1}
                   >
                     {item.listingTitle}
                   </Text>
-                  <Text className="font-poppins text-xs text-ink-500">
+                  <Text className="font-poppins text-caption text-ink-500">
                     {moment(item.lastMessageAt ?? item.createdAt).fromNow()}
                   </Text>
                 </View>
-                <Text className="mt-1 font-poppins text-xs leading-5 text-ink-500">
+                <Text className="mt-1 font-poppins text-caption leading-5 text-ink-500">
                   {user?.id === item.buyerId
                     ? "You're the buyer"
                     : "You're the seller"}{" "}
@@ -164,7 +164,7 @@ export default function MessagesScreen() {
           ListEmptyComponent={
             <View className="mt-16 items-center px-10">
               <MessageCircle size={40} color={colors.brand200} />
-              <Text className="mt-4 text-center font-poppins-medium text-sm text-ink-500">
+              <Text className="mt-4 text-center font-poppins-medium text-body text-ink-500">
                 No conversations yet.
               </Text>
             </View>

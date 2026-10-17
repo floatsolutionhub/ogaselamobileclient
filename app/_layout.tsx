@@ -1,13 +1,12 @@
 import "../global.css";
 import "@/lib/nativewind-interop";
 
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-  useFonts,
-} from "@expo-google-fonts/poppins";
+// Per-weight imports: the package root would bundle all 18 Poppins files (~3MB) into the app.
+import { Poppins_400Regular } from "@expo-google-fonts/poppins/400Regular";
+import { Poppins_500Medium } from "@expo-google-fonts/poppins/500Medium";
+import { Poppins_600SemiBold } from "@expo-google-fonts/poppins/600SemiBold";
+import { Poppins_700Bold } from "@expo-google-fonts/poppins/700Bold";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
@@ -133,6 +132,18 @@ export default function RootLayout() {
                 />
                 <Stack.Screen
                   name="disputes/[id]"
+                  options={{ presentation: "card" }}
+                />
+                <Stack.Screen
+                  name="payment-complete"
+                  options={{ presentation: "transparentModal", animation: "none" }}
+                />
+                <Stack.Screen
+                  name="office-pickups/index"
+                  options={{ presentation: "card" }}
+                />
+                <Stack.Screen
+                  name="office-pickups/[id]"
                   options={{ presentation: "card" }}
                 />
                 <Stack.Screen

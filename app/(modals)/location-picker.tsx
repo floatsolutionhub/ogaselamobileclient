@@ -3,19 +3,25 @@ import { Check, ChevronLeft, Globe, MapPin, Search } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useLocation } from "@/context/LocationContext";
 import * as geoService from "@/services/geo";
 import { colors } from "@/theme/colors";
 import { NigeriaCity, NigeriaState } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 export default function LocationPickerSheet() {
+  // Keep the last rows clear of Android's navigation buttons (see SheetScreen).
+  const { bottom } = useSafeAreaInsets();
+  const bottomInset = Platform.OS === "android" ? bottom : 0;
   const {
     selectedCity,
     selectedState,
@@ -101,7 +107,9 @@ export default function LocationPickerSheet() {
   return (
     <ScrollView
       className="flex-1 bg-white px-6"
-      contentContainerStyle={{ paddingBottom: 24 }}
+      contentContainerStyle={{ paddingBottom: 24 + bottomInset }}
+      // Lets the Android form sheet hand drags to this list (see SheetScreen).
+      nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets={false}
     >
@@ -113,10 +121,10 @@ export default function LocationPickerSheet() {
               hitSlop={12}
               className="h-8 w-8 items-center justify-center rounded-full bg-surface"
             >
-              <ChevronLeft size={18} color={colors.ink700} />
+              <ChevronLeft size={ICON.md} color={colors.ink700} />
             </Pressable>
           ) : null}
-          <Text className="font-poppins-bold text-lg text-ink-900">
+          <Text className="font-poppins-bold text-title text-ink-900">
             {activeState
               ? `Choose a city in ${activeState.name}`
               : "Choose a state"}
@@ -124,13 +132,13 @@ export default function LocationPickerSheet() {
         </View>
 
         <View className="mt-4 flex-row items-center gap-2 rounded-2xl border border-brand-100 bg-surface px-4 py-3">
-          <Search size={16} color={colors.ink500} />
+          <Search size={ICON.sm} color={colors.ink500} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder={activeState ? "Search city" : "Search state"}
             placeholderTextColor={colors.ink300}
-            className="flex-1 font-poppins text-sm text-ink-900"
+            className="flex-1 font-poppins text-body text-ink-900"
           />
         </View>
       </View>
@@ -141,14 +149,14 @@ export default function LocationPickerSheet() {
         <>
           {activeState
             ? cityResults.length === 0 && (
-                <Text className="mt-8 text-center font-poppins text-sm text-ink-500">
-                  No cities match "{query}"
+                <Text className="mt-8 text-center font-poppins text-body text-ink-500">
+                  No cities match “{query}”
                 </Text>
               )
             : stateResults.length === 0 &&
               !"all states in nigeria".includes(query.trim().toLowerCase()) && (
-                <Text className="mt-8 text-center font-poppins text-sm text-ink-500">
-                  No states match "{query}"
+                <Text className="mt-8 text-center font-poppins text-body text-ink-500">
+                  No states match “{query}”
                 </Text>
               )}
 
@@ -168,11 +176,11 @@ export default function LocationPickerSheet() {
                   >
                     <View className="flex-row items-center gap-3">
                       <MapPin
-                        size={16}
+                        size={ICON.sm}
                         color={active ? colors.brand600 : colors.ink300}
                       />
                       <Text
-                        className={`font-poppins-medium text-sm ${
+                        className={`font-poppins-medium text-body ${
                           active ? "text-brand-600" : "text-ink-900"
                         }`}
                       >
@@ -180,7 +188,7 @@ export default function LocationPickerSheet() {
                       </Text>
                     </View>
                     {active ? (
-                      <Check size={16} color={colors.brand600} />
+                      <Check size={ICON.sm} color={colors.brand600} />
                     ) : null}
                   </Pressable>
                 );
@@ -200,22 +208,22 @@ export default function LocationPickerSheet() {
             >
               <View className="flex-row items-center gap-3">
                 <Globe
-                  size={16}
+                  size={ICON.sm}
                   color={isNationwide ? colors.brand600 : colors.ink300}
                 />
                 <View>
                   <Text
-                    className={`font-poppins-semibold text-sm ${isNationwide ? "text-brand-600" : "text-ink-900"}`}
+                    className={`font-poppins-semibold text-body ${isNationwide ? "text-brand-600" : "text-ink-900"}`}
                   >
                     All States In Nigeria
                   </Text>
-                  <Text className="font-poppins text-xs text-ink-500">
+                  <Text className="font-poppins text-caption text-ink-500">
                     See ads from across the country
                   </Text>
                 </View>
               </View>
               {isNationwide ? (
-                <Check size={16} color={colors.brand600} />
+                <Check size={ICON.sm} color={colors.brand600} />
               ) : null}
             </Pressable>
           ) : null}
@@ -236,11 +244,11 @@ export default function LocationPickerSheet() {
                   >
                     <View className="flex-row items-center gap-3">
                       <MapPin
-                        size={16}
+                        size={ICON.sm}
                         color={active ? colors.brand600 : colors.ink300}
                       />
                       <Text
-                        className={`font-poppins-medium text-sm ${
+                        className={`font-poppins-medium text-body ${
                           active ? "text-brand-600" : "text-ink-900"
                         }`}
                       >

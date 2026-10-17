@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { X } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, ScrollView, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type SheetScreenProps = {
   children: React.ReactNode;
@@ -28,6 +29,11 @@ function closeSheet() {
  * at all when the route opens full screen.
  */
 export function SheetScreen({ children, scroll = true }: SheetScreenProps) {
+  // Android draws edge-to-edge, so the sheet runs under the navigation buttons; pad the content
+  // past them so the last buttons stay tappable. iOS sheets already clear the home indicator.
+  const { bottom } = useSafeAreaInsets();
+  const bottomInset = Platform.OS === "android" ? bottom : 0;
+
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-white">
       <View className="flex-row justify-end px-4 pt-3">
@@ -38,14 +44,17 @@ export function SheetScreen({ children, scroll = true }: SheetScreenProps) {
           accessibilityLabel="Close"
           className="h-9 w-9 items-center justify-center rounded-full bg-surface"
         >
-          <X size={18} color={colors.ink700} />
+          <X size={ICON.md} color={colors.ink700} />
         </Pressable>
       </View>
 
       {scroll ? (
         <ScrollView
           className="flex-1 bg-white px-6"
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={{ paddingBottom: 32 + bottomInset }}
+          // Android form sheets only pass drags to a nested-scrolling child; without this the sheet
+          // swallows them and the content can't be scrolled back up after the first scroll.
+          nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets={false}
@@ -53,7 +62,9 @@ export function SheetScreen({ children, scroll = true }: SheetScreenProps) {
           {children}
         </ScrollView>
       ) : (
-        <View className="flex-1 bg-white px-6">{children}</View>
+        <View className="flex-1 bg-white px-6" style={{ paddingBottom: bottomInset }}>
+          {children}
+        </View>
       )}
     </SafeAreaView>
   );

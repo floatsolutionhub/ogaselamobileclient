@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { ProfileChange } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /**
  * Shows where the latest change of one type stands: awaiting approval (with a way to withdraw
@@ -25,17 +26,17 @@ export function ChangeRequestBanner({
   if (change?.status === "PendingReview") {
     return (
       <View className="flex-row gap-3 rounded-2xl border border-gold-50 bg-gold-50 p-4">
-        <Clock size={18} color={colors.gold700} />
+        <Clock size={ICON.md} color={colors.gold700} />
         <View className="flex-1">
-          <Text className="font-poppins-semibold text-sm text-gold-700">
+          <Text className="font-poppins-semibold text-body text-gold-700">
             Awaiting approval
           </Text>
-          <Text className="mt-0.5 font-poppins text-xs text-ink-700">
+          <Text className="mt-0.5 font-poppins text-caption text-ink-700">
             {pendingText}
           </Text>
-          <Text className="mt-0.5 font-poppins text-[11px] text-ink-500">
+          <Text className="mt-0.5 font-poppins text-micro text-ink-500">
             Submitted {moment(change.createdAt).format("D MMM YYYY, h:mm a")}.
-            Your current details stay in use until it's approved.
+            Your current details stay in use until it’s approved.
           </Text>
           {onCancel ? (
             <Pressable
@@ -44,7 +45,7 @@ export function ChangeRequestBanner({
               hitSlop={8}
               className="mt-2 self-start"
             >
-              <Text className="font-poppins-semibold text-xs text-danger">
+              <Text className="font-poppins-semibold text-caption text-danger">
                 {cancelling ? "Withdrawing..." : "Withdraw request"}
               </Text>
             </Pressable>
@@ -57,17 +58,17 @@ export function ChangeRequestBanner({
   if (change?.status === "Rejected") {
     return (
       <View className="flex-row gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-4">
-        <XCircle size={18} color={colors.danger} />
+        <XCircle size={ICON.md} color={colors.danger} />
         <View className="flex-1">
-          <Text className="font-poppins-semibold text-sm text-danger">
-            Last request wasn't approved
+          <Text className="font-poppins-semibold text-body text-danger">
+            Last request wasn’t approved
           </Text>
           {change.reviewNote ? (
-            <Text className="mt-0.5 font-poppins text-xs text-ink-700">
+            <Text className="mt-0.5 font-poppins text-caption text-ink-700">
               {change.reviewNote}
             </Text>
           ) : null}
-          <Text className="mt-0.5 font-poppins text-[11px] text-ink-500">
+          <Text className="mt-0.5 font-poppins text-micro text-ink-500">
             You can submit it again below.
           </Text>
         </View>

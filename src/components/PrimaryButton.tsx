@@ -34,7 +34,7 @@ export function PrimaryButton({
         {loading ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text className="font-poppins-semibold text-base text-white">
+          <Text className="font-poppins-semibold text-subtitle text-white">
             {label}
           </Text>
         )}

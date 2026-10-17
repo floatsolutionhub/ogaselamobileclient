@@ -26,6 +26,7 @@ import { ApiError } from "@/lib/apiClient";
 import * as meService from "@/services/me";
 import type { ProfileChange, UserDocument, UserDocumentType } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /**
  * Seller business setup: business name and store/office address (changes go to staff for
@@ -50,6 +51,7 @@ export default function BusinessInfoScreen() {
   const [viewing, setViewing] = useState<{
     document: UserDocument;
     title: string;
+    note?: string;
   } | null>(null);
 
   const load = useCallback(async () => {
@@ -75,7 +77,9 @@ export default function BusinessInfoScreen() {
   const dirty =
     businessName.trim() !== currentName ||
     storeAddress.trim() !== currentAddress;
-  const canSubmit = dirty && businessName.trim().length >= 2 && !submitting;
+  // One change at a time: wait for the pending one to be reviewed (or withdraw it).
+  const hasPending = change?.status === "PendingReview";
+  const canSubmit = dirty && businessName.trim().length >= 2 && !submitting && !hasPending;
 
   const submit = async () => {
     setSubmitting(true);
@@ -152,11 +156,16 @@ export default function BusinessInfoScreen() {
       : { Icon: Clock, text: "Pending approval", tone: "brand" };
 
   const openDocument = (type: UserDocumentType, title: string) => {
+    const document = latest(type);
+    // One submission per document at a time: a pending one opens read-only until it's reviewed.
+    if (document?.status === "PendingReview") {
+      setViewing({ document, title, note: "This document is waiting for review. You can upload a new one once it’s approved or rejected." });
+      return;
+    }
     if (!isBusinessVerified) {
       setUploading(type);
       return;
     }
-    const document = latest(type);
     if (document) setViewing({ document, title });
   };
 
@@ -177,10 +186,10 @@ export default function BusinessInfoScreen() {
             }`}
           >
             <status.Icon
-              size={18}
+              size={ICON.md}
               color={status.tone === "gold" ? colors.gold700 : colors.brand600}
             />
-            <Text className="flex-shrink font-poppins-medium text-xs text-ink-900">
+            <Text className="flex-shrink font-poppins-medium text-caption text-ink-900">
               {status.text}
             </Text>
           </View>
@@ -199,10 +208,10 @@ export default function BusinessInfoScreen() {
 
         {/* Business details */}
         <View className="rounded-3xl border border-brand-50 bg-white p-5">
-          <Text className="font-poppins-semibold text-base text-ink-900">
+          <Text className="font-poppins-semibold text-subtitle text-ink-900">
             Business details
           </Text>
-          <Text className="mb-4 mt-0.5 font-poppins text-xs text-ink-500">
+          <Text className="mb-4 mt-0.5 font-poppins text-caption text-ink-500">
             Changes are reviewed by our team before they show on your shop.
           </Text>
           <FormField
@@ -231,8 +240,8 @@ export default function BusinessInfoScreen() {
             {submitting ? (
               <ActivityIndicator color={colors.white} />
             ) : (
-              <Text className="font-poppins-semibold text-base text-white">
-                Submit for approval
+              <Text className="font-poppins-semibold text-subtitle text-white">
+                {hasPending ? "Waiting for review" : "Submit for approval"}
               </Text>
             )}
           </Pressable>
@@ -241,12 +250,12 @@ export default function BusinessInfoScreen() {
         {/* Business documents */}
         <View className="overflow-hidden rounded-3xl border border-brand-50 bg-white">
           <View className="flex-row items-start gap-3 px-5 pb-2 pt-5">
-            <Building2 size={18} color={colors.brand600} />
+            <Building2 size={ICON.md} color={colors.brand600} />
             <View className="flex-1">
-              <Text className="font-poppins-semibold text-base text-ink-900">
+              <Text className="font-poppins-semibold text-subtitle text-ink-900">
                 Business documents
               </Text>
-              <Text className="mt-0.5 font-poppins text-xs text-ink-500">
+              <Text className="mt-0.5 font-poppins text-caption text-ink-500">
                 {isBusinessVerified
                   ? "Verified - tap a document to view it."
                   : "Upload your registration document and proof of your office address. Our team reviews them."}
@@ -292,7 +301,7 @@ export default function BusinessInfoScreen() {
       <DocumentDetailSheet
         document={viewing?.document ?? null}
         title={viewing?.title ?? ""}
-        lockNote="Your business is verified, so this can no longer be changed."
+        lockNote={viewing?.note ?? "Your business is verified, so this can no longer be changed."}
         onClose={() => setViewing(null)}
       />
     </SafeAreaView>

@@ -20,10 +20,10 @@ export default function SignUpStepOneSheet() {
     <SheetScreen>
       <View className="items-center">
         <Logo size={40} />
-        <Text className="mt-3 font-poppins-bold text-xl text-ink-900">
+        <Text className="mt-3 font-poppins-bold text-heading text-ink-900">
           Create your account
         </Text>
-        <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
+        <Text className="mt-1 text-center font-poppins text-body text-ink-500">
           Step 1 of 2 · Tell us about yourself
         </Text>
       </View>
@@ -102,22 +102,22 @@ export default function SignUpStepOneSheet() {
         )}
       </Formik>
 
-      <View className="mb-4 mt-6 flex-row items-center gap-3">
+      {/* <View className="mb-4 mt-6 flex-row items-center gap-3">
         <View className="h-px flex-1 bg-brand-100" />
-        <Text className="font-poppins text-xs text-ink-500">
+        <Text className="font-poppins text-caption text-ink-500">
           or sign up with
         </Text>
         <View className="h-px flex-1 bg-brand-100" />
-      </View>
+      </View> */}
 
-      <SocialSignInButtons mode="signup" redirect={redirect} />
+      {/* <SocialSignInButtons mode="signup" redirect={redirect} /> */}
 
       <View className="mb-4 mt-6 flex-row justify-center gap-1">
-        <Text className="font-poppins text-sm text-ink-500">
+        <Text className="font-poppins text-body text-ink-500">
           Already have an account?
         </Text>
         <Text
-          className="font-poppins-semibold text-sm text-brand-600"
+          className="font-poppins-semibold text-body text-brand-600"
           onPress={() =>
             router.replace({
               pathname: "/(modals)/sign-in",
@@ -129,7 +129,7 @@ export default function SignUpStepOneSheet() {
         </Text>
       </View>
 
-      <Text className="mb-4 text-center font-poppins text-xs leading-5 text-ink-500">
+      <Text className="mb-4 text-center font-poppins text-caption leading-5 text-ink-500">
         By continuing, you agree to our{" "}
         <Text
           className="font-poppins-medium text-brand-600"

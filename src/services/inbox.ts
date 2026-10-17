@@ -15,7 +15,8 @@ export type InboxNotificationType =
   | "AdReinstated"
   | "DisputeOpened"
   | "DisputeUpdate"
-  | "DisputeResolved";
+  | "DisputeResolved"
+  | "OfficePickupUpdate";
 
 export interface InboxNotification {
   id: string;
@@ -25,6 +26,8 @@ export interface InboxNotification {
   listingId: string | null;
   conversationId: string | null;
   disputeId?: string | null;
+  /** Set for office pickup updates - tapping opens that request. */
+  officePickupId?: string | null;
   /** More than 1 only for grouped chat messages. */
   count: number;
   isRead: boolean;

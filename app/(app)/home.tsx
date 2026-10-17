@@ -37,6 +37,7 @@ import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import * as listingsService from "@/services/listings";
 import { colors, gradients } from "@/theme/colors";
 import type { SearchResultItem } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 const HOT_PICKS_PAGE_SIZE = 10;
 const LOAD_MORE_THRESHOLD = 600;
@@ -201,13 +202,13 @@ export default function HomeScreen() {
   const renderHotPicksHeader = () => (
     <>
       <View className="flex-1 flex-row items-center gap-2">
-        <Text className="font-poppins-semibold text-lg text-ink-900">
+        <Text className="font-poppins-semibold text-title text-ink-900">
           Hot Picks
         </Text>
         {selectedCategoryName ? (
           <View className="flex-shrink flex-row items-center gap-1 rounded-full bg-brand-50 py-1 pl-3 pr-2">
             <Text
-              className="flex-shrink font-poppins-medium text-xs text-brand-700"
+              className="flex-shrink font-poppins-medium text-caption text-brand-700"
               numberOfLines={1}
             >
               {selectedCategoryName}
@@ -217,7 +218,7 @@ export default function HomeScreen() {
               hitSlop={8}
               accessibilityLabel="Show all categories"
             >
-              <X size={12} color={colors.brand700} />
+              <X size={ICON.xs} color={colors.brand700} />
             </Pressable>
           </View>
         ) : null}
@@ -234,7 +235,7 @@ export default function HomeScreen() {
         }`}
       >
         <ArrowDownWideNarrow
-          size={18}
+          size={ICON.md}
           color={hotCategoryId ? colors.white : colors.ink700}
         />
       </Pressable>
@@ -276,11 +277,11 @@ export default function HomeScreen() {
               onPress={() => router.push("/(modals)/location-picker")}
               className="flex-shrink flex-row items-center gap-1.5 rounded-full border border-brand-100 bg-white px-3 py-1.5"
             >
-              <MapPin size={14} color={colors.brand600} />
-              <Text className="font-poppins-medium text-xs text-ink-900">
+              <MapPin size={ICON.sm} color={colors.brand600} />
+              <Text className="font-poppins-medium text-caption text-ink-900">
                 {locationLabel}
               </Text>
-              <ChevronDown size={14} color={colors.ink500} />
+              <ChevronDown size={ICON.sm} color={colors.ink500} />
             </Pressable>
             {isAuthenticated ? <NotificationBell /> : null}
           </View>
@@ -291,10 +292,10 @@ export default function HomeScreen() {
             end={{ x: 1, y: 1 }}
             className="mt-4 rounded-3xl p-6 pb-8"
           >
-            <Text className="font-poppins-bold text-[26px] leading-8 text-white">
+            <Text className="font-poppins-bold text-display text-white">
               What do you need?
             </Text>
-            <Text className="mt-1 font-poppins text-sm text-white/80">
+            <Text className="mt-1 font-poppins text-body text-white/80">
               Find anything, from anyone, near you.
             </Text>
 
@@ -302,8 +303,8 @@ export default function HomeScreen() {
               onPress={() => router.push("/search")}
               className="mt-5 flex-row items-center gap-2 rounded-2xl bg-white px-4 py-3.5"
             >
-              <Search size={18} color={colors.ink500} />
-              <Text className="font-poppins text-sm text-ink-500">
+              <Search size={ICON.md} color={colors.ink500} />
+              <Text className="font-poppins text-body text-ink-500">
                 Search Ogasela
               </Text>
             </Pressable>
@@ -323,7 +324,7 @@ export default function HomeScreen() {
         ) : null}
 
         <View className="mt-6">
-          <Text className="mb-3 px-6 font-poppins-semibold text-base text-ink-900">
+          <Text className="mb-3 px-6 font-poppins-semibold text-subtitle text-ink-900">
             Categories
           </Text>
           {categoriesLoading ? (
@@ -374,22 +375,22 @@ export default function HomeScreen() {
             />
           ) : hotError ? (
             <View className="items-center rounded-2xl border border-brand-50 bg-white px-4 py-6">
-              <Text className="font-poppins text-sm text-ink-500">
-                Couldn't load Hot Picks.
+              <Text className="font-poppins text-body text-ink-500">
+                Couldn’t load Hot Picks.
               </Text>
               <Pressable
                 onPress={() => loadHotPicks(1)}
                 className="mt-3 rounded-full bg-brand-50 px-4 py-2"
               >
-                <Text className="font-poppins-medium text-xs text-brand-700">
+                <Text className="font-poppins-medium text-caption text-brand-700">
                   Try again
                 </Text>
               </Pressable>
             </View>
           ) : hotPicks.length === 0 ? (
             <View className="items-center rounded-2xl border border-brand-50 bg-white px-4 py-6">
-              <PackageOpen size={22} color={colors.ink300} />
-              <Text className="mt-2 text-center font-poppins-medium text-sm text-ink-500">
+              <PackageOpen size={ICON.lg} color={colors.ink300} />
+              <Text className="mt-2 text-center font-poppins-medium text-body text-ink-500">
                 {hotLocation ? `No hot picks in ${hotLocation} yet` : "No data"}
               </Text>
               {hotLocation ? (
@@ -398,7 +399,7 @@ export default function HomeScreen() {
                   accessibilityRole="button"
                   className="mt-4 rounded-2xl bg-brand-600 px-6 py-3 active:opacity-90"
                 >
-                  <Text className="font-poppins-semibold text-sm text-white">
+                  <Text className="font-poppins-semibold text-body text-white">
                     Show all
                   </Text>
                 </Pressable>
@@ -408,14 +409,14 @@ export default function HomeScreen() {
             <>
               {showAllLocations && selectedCity ? (
                 <View className="mb-3 flex-row items-center justify-between rounded-xl bg-brand-50 px-3 py-2">
-                  <Text className="flex-1 font-poppins text-xs text-brand-700">
+                  <Text className="flex-1 font-poppins text-caption text-brand-700">
                     Showing ads from all locations
                   </Text>
                   <Pressable
                     onPress={() => setShowAllLocations(false)}
                     hitSlop={8}
                   >
-                    <Text className="font-poppins-semibold text-xs text-brand-700">
+                    <Text className="font-poppins-semibold text-caption text-brand-700">
                       Only {selectedCity}
                     </Text>
                   </Pressable>
@@ -444,8 +445,8 @@ export default function HomeScreen() {
                     style={{ marginVertical: 12 }}
                   />
                 ) : hotPicks.length >= hotTotal ? (
-                  <Text className="mt-2 text-center font-poppins text-xs text-ink-300">
-                    You're all caught up · pull down for a fresh mix
+                  <Text className="mt-2 text-center font-poppins text-caption text-ink-300">
+                    You’re all caught up · pull down for a fresh mix
                   </Text>
                 ) : null}
               </View>
@@ -481,22 +482,22 @@ export default function HomeScreen() {
           accessibilityLabel={`Location: ${locationLabel}. Change location`}
           className="max-w-[40%] flex-row items-center gap-1 rounded-full border border-brand-100 bg-white px-3 py-2"
         >
-          <MapPin size={14} color={colors.brand600} />
+          <MapPin size={ICON.sm} color={colors.brand600} />
           <Text
-            className="flex-shrink font-poppins-medium text-xs text-ink-900"
+            className="flex-shrink font-poppins-medium text-caption text-ink-900"
             numberOfLines={1}
           >
             {locationLabel}
           </Text>
-          <ChevronDown size={14} color={colors.ink500} />
+          <ChevronDown size={ICON.sm} color={colors.ink500} />
         </Pressable>
         <Pressable
           onPress={() => router.push("/search")}
           accessibilityRole="search"
           className="flex-1 flex-row items-center gap-2 rounded-2xl border border-brand-100 bg-surface px-3.5 py-2.5"
         >
-          <Search size={16} color={colors.ink500} />
-          <Text className="font-poppins text-sm text-ink-500" numberOfLines={1}>
+          <Search size={ICON.sm} color={colors.ink500} />
+          <Text className="font-poppins text-body text-ink-500" numberOfLines={1}>
             Search Ogasela
           </Text>
         </Pressable>

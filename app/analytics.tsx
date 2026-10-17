@@ -35,6 +35,7 @@ import * as listingsService from "@/services/listings";
 import { colors } from "@/theme/colors";
 import type { Listing } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { ICON } from "@/theme/typography";
 
 const PERIODS: { days: AnalyticsDays; label: string }[] = [
   { days: 7, label: "7 days" },
@@ -61,14 +62,14 @@ function Delta({ metric, days }: { metric: MetricComparison; days: number }) {
   const { current, previous } = metric;
   if (current === 0 && previous === 0) {
     return (
-      <Text className="mt-1 font-poppins text-[11px] text-ink-500">
+      <Text className="mt-1 font-poppins text-micro text-ink-500">
         No activity yet
       </Text>
     );
   }
   if (previous === 0) {
     return (
-      <Text className="mt-1 font-poppins text-[11px] text-ink-500">
+      <Text className="mt-1 font-poppins text-micro text-ink-500">
         New this period
       </Text>
     );
@@ -91,12 +92,12 @@ function Delta({ metric, days }: { metric: MetricComparison; days: number }) {
 
   return (
     <View className="mt-1 flex-row items-center gap-0.5">
-      <Icon size={12} color={color} />
-      <Text className="font-poppins-medium text-[11px]" style={{ color }}>
+      <Icon size={ICON.xs} color={color} />
+      <Text className="font-poppins-medium text-micro" style={{ color }}>
         {rounded > 0 ? "+" : ""}
         {rounded}%
       </Text>
-      <Text className="font-poppins text-[11px] text-ink-500">
+      <Text className="font-poppins text-micro text-ink-500">
         {" "}
         vs previous {days} days
       </Text>
@@ -117,9 +118,9 @@ function StatTile({
 }) {
   return (
     <View className="flex-1 rounded-2xl border border-brand-50 bg-white p-4">
-      <Text className="font-poppins text-xs text-ink-500">{label}</Text>
+      <Text className="font-poppins text-caption text-ink-500">{label}</Text>
       <Text
-        className={`mt-1 font-poppins-semibold text-ink-900 ${large ? "text-3xl" : "text-xl"}`}
+        className={`mt-1 font-poppins-semibold text-ink-900 ${large ? "text-hero" : "text-heading"}`}
       >
         {compact(metric.current)}
       </Text>
@@ -186,10 +187,10 @@ function PerformanceTable({ data }: { data: ListingAnalytics }) {
 
   const columnHeader = (title: string, p?: ExternalPlatformEngagement) => (
     <View className="flex-1 items-end">
-      <Text className="font-poppins-semibold text-xs text-ink-900">
+      <Text className="font-poppins-semibold text-caption text-ink-900">
         {title}
       </Text>
-      <Text className="font-poppins text-[10px] text-ink-500">
+      <Text className="font-poppins text-micro text-ink-500">
         {p === undefined
           ? `Last ${data.days} days`
           : p.promoted
@@ -202,7 +203,7 @@ function PerformanceTable({ data }: { data: ListingAnalytics }) {
   return (
     <View className="overflow-hidden rounded-2xl border border-brand-50 bg-white">
       <View className="flex-row items-end border-b border-brand-50 bg-surface px-4 py-3">
-        <Text className="flex-[1.3] font-poppins-medium text-xs text-ink-500">
+        <Text className="flex-[1.3] font-poppins-medium text-caption text-ink-500">
           Metric
         </Text>
         {columnHeader("Ogasela")}
@@ -214,13 +215,13 @@ function PerformanceTable({ data }: { data: ListingAnalytics }) {
           key={row.label}
           className={`flex-row items-center px-4 py-3 ${index !== rows.length - 1 ? "border-b border-brand-50" : ""}`}
         >
-          <Text className="flex-[1.3] font-poppins text-xs text-ink-700">
+          <Text className="flex-[1.3] font-poppins text-caption text-ink-700">
             {row.label}
           </Text>
           {row.values.map((value, i) => (
             <Text
               key={i}
-              className={`flex-1 text-right font-poppins-medium text-sm ${value === "—" ? "text-ink-300" : "text-ink-900"}`}
+              className={`flex-1 text-right font-poppins-medium text-body ${value === "—" ? "text-ink-300" : "text-ink-900"}`}
               style={{ fontVariant: ["tabular-nums"] }}
             >
               {value}
@@ -323,9 +324,9 @@ export default function AnalyticsScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Analytics
         </Text>
       </View>
@@ -352,7 +353,7 @@ export default function AnalyticsScreen() {
                 className={`flex-1 items-center rounded-xl py-2.5 ${selected ? "bg-brand-600" : ""}`}
               >
                 <Text
-                  className={`font-poppins-medium text-xs ${selected ? "text-white" : "text-ink-700"}`}
+                  className={`font-poppins-medium text-caption ${selected ? "text-white" : "text-ink-700"}`}
                 >
                   {period.label}
                 </Text>
@@ -362,7 +363,7 @@ export default function AnalyticsScreen() {
         </View>
 
         {!sellerProfileId ? (
-          <Text className="mt-10 text-center font-poppins text-sm text-ink-500">
+          <Text className="mt-10 text-center font-poppins text-body text-ink-500">
             Analytics are available for seller accounts.
           </Text>
         ) : loading ? (
@@ -372,21 +373,21 @@ export default function AnalyticsScreen() {
           />
         ) : error || !summary ? (
           <View className="mt-10 items-center">
-            <Text className="text-center font-poppins text-sm text-ink-500">
+            <Text className="text-center font-poppins text-body text-ink-500">
               {error}
             </Text>
             <Pressable
               onPress={() => loadOverview()}
               className="mt-3 rounded-full bg-brand-50 px-4 py-2"
             >
-              <Text className="font-poppins-medium text-xs text-brand-700">
+              <Text className="font-poppins-medium text-caption text-brand-700">
                 Try again
               </Text>
             </Pressable>
           </View>
         ) : (
           <>
-            <Text className="mb-3 mt-6 font-poppins-semibold text-base text-ink-900">
+            <Text className="mb-3 mt-6 font-poppins-semibold text-subtitle text-ink-900">
               Overview
             </Text>
             <View className="flex-row gap-3">
@@ -421,18 +422,18 @@ export default function AnalyticsScreen() {
                 days={summary.days}
               />
             </View>
-            <Text className="mt-2 font-poppins text-[11px] text-ink-500">
+            <Text className="mt-2 font-poppins text-micro text-ink-500">
               {moment(summary.from).format("D MMM")} –{" "}
               {moment(summary.to).format("D MMM YYYY")} · Impressions count each
               time one of your ads is shown in search or on the home screen.
             </Text>
 
-            <Text className="mb-3 mt-8 font-poppins-semibold text-base text-ink-900">
+            <Text className="mb-3 mt-8 font-poppins-semibold text-subtitle text-ink-900">
               Ad performance
             </Text>
             {ads.length === 0 ? (
               <View className="items-center rounded-2xl border border-brand-50 bg-white px-4 py-6">
-                <Text className="text-center font-poppins text-sm text-ink-500">
+                <Text className="text-center font-poppins text-body text-ink-500">
                   Once one of your ads is live, its performance shows here.
                 </Text>
               </View>
@@ -464,11 +465,11 @@ export default function AnalyticsScreen() {
                           />
                         ) : (
                           <View className="h-20 w-full items-center justify-center bg-brand-50">
-                            <ImageOff size={18} color={colors.ink300} />
+                            <ImageOff size={ICON.md} color={colors.ink300} />
                           </View>
                         )}
                         <Text
-                          className="px-2.5 py-2 font-poppins-medium text-xs text-ink-900"
+                          className="px-2.5 py-2 font-poppins-medium text-caption text-ink-900"
                           numberOfLines={2}
                         >
                           {ad.title}
@@ -487,7 +488,7 @@ export default function AnalyticsScreen() {
                   ) : adAnalytics ? (
                     <>
                       <PerformanceTable data={adAnalytics} />
-                      <Text className="mt-2 font-poppins text-[11px] leading-4 text-ink-500">
+                      <Text className="mt-2 font-poppins text-micro leading-4 text-ink-500">
                         Ogasela figures cover the last {adAnalytics.days} days;
                         clicks there are ad opens. Facebook and TikTok show
                         totals since the campaign started, updated about every
@@ -495,8 +496,8 @@ export default function AnalyticsScreen() {
                       </Text>
                     </>
                   ) : (
-                    <Text className="text-center font-poppins text-sm text-ink-500">
-                      Couldn't load this ad's performance.
+                    <Text className="text-center font-poppins text-body text-ink-500">
+                      Couldn’t load this ad’s performance.
                     </Text>
                   )}
                 </View>

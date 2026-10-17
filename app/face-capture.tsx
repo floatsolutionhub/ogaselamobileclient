@@ -23,6 +23,7 @@ import { ApiError } from "@/lib/apiClient";
 import { uploadProfilePhoto } from "@/services/me";
 import { MAX_EDGE, toResizedJpeg } from "@/utils/photos";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /**
  * Face capture for the profile photo: front camera with an oval guide. The API runs the photo
@@ -61,7 +62,7 @@ export default function FaceCaptureScreen() {
       accessibilityLabel="Close"
       className="h-11 w-11 items-center justify-center rounded-full bg-black/50"
     >
-      <X size={22} color={colors.white} />
+      <X size={ICON.lg} color={colors.white} />
     </Pressable>
   );
 
@@ -128,10 +129,10 @@ export default function FaceCaptureScreen() {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-black px-8">
         <Camera size={36} color={colors.white} />
-        <Text className="mt-4 text-center font-poppins-semibold text-lg text-white">
+        <Text className="mt-4 text-center font-poppins-semibold text-title text-white">
           Allow camera access
         </Text>
-        <Text className="mt-2 text-center font-poppins text-sm text-white/70">
+        <Text className="mt-2 text-center font-poppins text-body text-white/70">
           We use your front camera to take your profile photo.
         </Text>
         <Pressable
@@ -142,12 +143,12 @@ export default function FaceCaptureScreen() {
           }
           className="mt-6 rounded-2xl bg-brand-600 px-6 py-3.5"
         >
-          <Text className="font-poppins-semibold text-sm text-white">
+          <Text className="font-poppins-semibold text-body text-white">
             {permission.canAskAgain ? "Allow camera" : "Open settings"}
           </Text>
         </Pressable>
         <Pressable onPress={close} className="mt-4 px-4 py-2">
-          <Text className="font-poppins-medium text-sm text-white/70">
+          <Text className="font-poppins-medium text-body text-white/70">
             Not now
           </Text>
         </Pressable>
@@ -200,7 +201,7 @@ export default function FaceCaptureScreen() {
       >
         <View className="flex-row items-center justify-between px-5 pt-2">
           {closeButton}
-          <Text className="font-poppins-semibold text-base text-white">
+          <Text className="font-poppins-semibold text-subtitle text-white">
             Profile photo
           </Text>
           <View className="w-11" />
@@ -208,7 +209,7 @@ export default function FaceCaptureScreen() {
 
         <View className="items-center px-6 pb-6">
           <View className="mb-5 rounded-2xl bg-black/55 px-4 py-3">
-            <Text className="text-center font-poppins text-sm text-white">
+            <Text className="text-center font-poppins text-body text-white">
               {error ??
                 (photoUri
                   ? "Happy with it? We'll check it shows your face clearly."
@@ -223,8 +224,8 @@ export default function FaceCaptureScreen() {
                 disabled={uploading}
                 className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/60 py-4"
               >
-                <RotateCcw size={18} color={colors.white} />
-                <Text className="font-poppins-semibold text-sm text-white">
+                <RotateCcw size={ICON.md} color={colors.white} />
+                <Text className="font-poppins-semibold text-body text-white">
                   Retake
                 </Text>
               </Pressable>
@@ -236,7 +237,7 @@ export default function FaceCaptureScreen() {
                 {uploading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text className="font-poppins-semibold text-sm text-white">
+                  <Text className="font-poppins-semibold text-body text-white">
                     Use photo
                   </Text>
                 )}

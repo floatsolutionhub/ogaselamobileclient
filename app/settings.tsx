@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 /** Where each item opens. */
 const ROUTES = {
@@ -111,9 +112,9 @@ export default function SettingsScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Settings
         </Text>
       </View>
@@ -129,7 +130,7 @@ export default function SettingsScreen() {
 
           return (
             <View key={section.title} className="mt-6">
-              <Text className="mb-2 px-1 font-poppins-medium text-xs uppercase tracking-wide text-ink-500">
+              <Text className="mb-2 px-1 font-poppins-medium text-caption uppercase tracking-wide text-ink-500">
                 {section.title}
               </Text>
               <View className="overflow-hidden rounded-3xl border border-brand-50 bg-white">
@@ -144,17 +145,17 @@ export default function SettingsScreen() {
                     }`}
                   >
                     <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-                      <item.icon size={18} color={colors.brand600} />
+                      <item.icon size={ICON.md} color={colors.brand600} />
                     </View>
                     <View className="flex-1">
-                      <Text className="font-poppins-medium text-sm text-ink-900">
+                      <Text className="font-poppins-medium text-body text-ink-900">
                         {item.label}
                       </Text>
-                      <Text className="font-poppins text-xs text-ink-500">
+                      <Text className="font-poppins text-caption text-ink-500">
                         {item.description}
                       </Text>
                     </View>
-                    <ChevronRight size={16} color={colors.ink300} />
+                    <ChevronRight size={ICON.sm} color={colors.ink300} />
                   </Pressable>
                 ))}
               </View>

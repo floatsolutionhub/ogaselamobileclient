@@ -3,7 +3,10 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "API_BASE_URL": "https://api.ogasela.com"
+        "EXPO_PUBLIC_API_URL": "https://api.ogasela.com/api/v1",
+        "EXPO_PUBLIC_AUTO_LOGOUT_MINUTES": "10",
+        "EXPO_PUBLIC_SUPPORT_PHONE": "+2348166064166",
+        "EXPO_PUBLIC_SUPPORT_WHATSAPP_URL": "https://wa.me/message/YLK4QJBSIGZ5M1"
       },
       "android": {
         "buildType": "apk"
@@ -11,7 +14,10 @@
     },
     "production": {
       "env": {
-        "API_BASE_URL": "https://api.ogasela.com"
+        "EXPO_PUBLIC_API_URL": "https://api.ogasela.com/api/v1",
+        "EXPO_PUBLIC_AUTO_LOGOUT_MINUTES": "10",
+        "EXPO_PUBLIC_SUPPORT_PHONE": "+2348166064166",
+        "EXPO_PUBLIC_SUPPORT_WHATSAPP_URL": "https://wa.me/message/YLK4QJBSIGZ5M1"
       },
       "android": {
         "buildType": "app-bundle",

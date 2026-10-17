@@ -8,6 +8,7 @@ import { useFavourites } from "@/context/FavouritesContext";
 import { colors } from "@/theme/colors";
 import { SearchResultItem } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { ICON } from "@/theme/typography";
 
 type ListingCardProps = {
   listing: SearchResultItem;
@@ -63,7 +64,7 @@ export function ListingCard({ listing, variant = "rail" }: ListingCardProps) {
           className="absolute right-2 top-2 h-8 w-8 items-center justify-center rounded-full bg-white/90"
         >
           <Heart
-            size={16}
+            size={ICON.sm}
             color={favourited ? colors.danger : colors.ink500}
             fill={favourited ? colors.danger : "transparent"}
           />
@@ -72,7 +73,7 @@ export function ListingCard({ listing, variant = "rail" }: ListingCardProps) {
 
       <View className="p-3">
         <Text
-          className="font-poppins-semibold text-sm text-ink-900"
+          className="font-poppins-semibold text-body text-ink-900"
           numberOfLines={1}
         >
           {listing.price !== null
@@ -80,15 +81,15 @@ export function ListingCard({ listing, variant = "rail" }: ListingCardProps) {
             : "Price on request"}
         </Text>
         <Text
-          className="mt-1 font-poppins text-xs text-ink-700"
+          className="mt-1 font-poppins text-caption text-ink-700"
           numberOfLines={2}
         >
           {listing.title}
         </Text>
         <View className="mt-2 flex-row items-center gap-1">
-          <MapPin size={11} color={colors.ink300} />
+          <MapPin size={ICON.xs} color={colors.ink300} />
           <Text
-            className="font-poppins text-[11px] text-ink-300"
+            className="font-poppins text-micro text-ink-300"
             numberOfLines={1}
           >
             {listing.location}

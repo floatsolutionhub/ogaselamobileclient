@@ -24,6 +24,7 @@ import * as searchService from "@/services/search";
 import { colors } from "@/theme/colors";
 import { SearchResultItem } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { ICON } from "@/theme/typography";
 
 const PAGE_SIZE = 20;
 /** Wait for a pause in typing before searching, instead of one request per keystroke. */
@@ -199,11 +200,11 @@ export default function SearchScreen() {
       {categoryInfo ? (
         <View className="mt-4 flex-row px-6">
           <View className="flex-row items-center gap-2 rounded-full bg-brand-50 px-4 py-2">
-            <Text className="font-poppins-medium text-xs text-brand-700">
+            <Text className="font-poppins-medium text-caption text-brand-700">
               {categoryInfo.name}
             </Text>
             <Pressable onPress={clearCategory} hitSlop={8}>
-              <X size={12} color={colors.brand700} />
+              <X size={ICON.xs} color={colors.brand700} />
             </Pressable>
           </View>
         </View>
@@ -251,11 +252,11 @@ export default function SearchScreen() {
               key={chip.key}
               className="flex-row items-center gap-1.5 rounded-full border border-brand-100 bg-white px-3 py-1.5"
             >
-              <Text className="font-poppins-medium text-xs text-ink-700">
+              <Text className="font-poppins-medium text-caption text-ink-700">
                 {chip.label}
               </Text>
               <Pressable onPress={chip.clear} hitSlop={8}>
-                <X size={12} color={colors.ink500} />
+                <X size={ICON.xs} color={colors.ink500} />
               </Pressable>
             </View>
           ))}
@@ -263,7 +264,7 @@ export default function SearchScreen() {
             onPress={() => setFilters(DEFAULT_SEARCH_FILTERS)}
             className="justify-center px-1 py-1.5"
           >
-            <Text className="font-poppins-medium text-xs text-brand-600">
+            <Text className="font-poppins-medium text-caption text-brand-600">
               Clear all
             </Text>
           </Pressable>
@@ -271,7 +272,7 @@ export default function SearchScreen() {
       ) : null}
 
       {!loading && !error ? (
-        <Text className="mt-4 px-6 font-poppins text-xs text-ink-500">
+        <Text className="mt-4 px-6 font-poppins text-caption text-ink-500">
           {totalCount === 1
             ? "1 result"
             : `${totalCount.toLocaleString("en-NG")} results`}
@@ -289,10 +290,10 @@ export default function SearchScreen() {
           hitSlop={12}
           className="h-10 w-10 items-center justify-center rounded-full bg-surface"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
         <View className="flex-1 flex-row items-center gap-2 rounded-2xl border border-brand-100 bg-surface px-4 py-3">
-          <Search size={16} color={colors.ink500} />
+          <Search size={ICON.sm} color={colors.ink500} />
           <TextInput
             // Opening a category is for browsing its subcategories - don't cover them with the keyboard.
             autoFocus={!category}
@@ -303,11 +304,11 @@ export default function SearchScreen() {
             autoCorrect={false}
             placeholder="Search Ogasela"
             placeholderTextColor={colors.ink300}
-            className="flex-1 font-poppins text-sm text-ink-900"
+            className="flex-1 font-poppins text-body text-ink-900"
           />
           {query.length > 0 ? (
             <Pressable onPress={() => setQuery("")} hitSlop={8}>
-              <X size={16} color={colors.ink500} />
+              <X size={ICON.sm} color={colors.ink500} />
             </Pressable>
           ) : null}
         </View>
@@ -321,12 +322,12 @@ export default function SearchScreen() {
           }`}
         >
           <SlidersHorizontal
-            size={18}
+            size={ICON.md}
             color={activeFilterCount > 0 ? colors.white : colors.ink700}
           />
           {activeFilterCount > 0 ? (
             <View className="absolute -right-1.5 -top-1.5 h-5 min-w-[20px] items-center justify-center rounded-full bg-gold-500 px-1">
-              <Text className="font-poppins-semibold text-[10px] text-ink-900">
+              <Text className="font-poppins-semibold text-micro text-ink-900">
                 {activeFilterCount}
               </Text>
             </View>
@@ -365,21 +366,21 @@ export default function SearchScreen() {
             />
           ) : error ? (
             <View className="mt-10 items-center px-8">
-              <Text className="text-center font-poppins text-sm text-ink-500">
+              <Text className="text-center font-poppins text-body text-ink-500">
                 Something went wrong while searching.
               </Text>
               <Pressable
                 onPress={() => runSearch(1)}
                 className="mt-3 rounded-full bg-brand-50 px-4 py-2"
               >
-                <Text className="font-poppins-medium text-xs text-brand-700">
+                <Text className="font-poppins-medium text-caption text-brand-700">
                   Try again
                 </Text>
               </Pressable>
             </View>
           ) : (
             <View className="mt-10 items-center px-8">
-              <Text className="text-center font-poppins-medium text-sm text-ink-700">
+              <Text className="text-center font-poppins-medium text-body text-ink-700">
                 No listings match your search.
               </Text>
               {activeFilterCount > 0 ? (
@@ -387,12 +388,12 @@ export default function SearchScreen() {
                   onPress={() => setFilters(DEFAULT_SEARCH_FILTERS)}
                   className="mt-3 rounded-full bg-brand-50 px-4 py-2"
                 >
-                  <Text className="font-poppins-medium text-xs text-brand-700">
+                  <Text className="font-poppins-medium text-caption text-brand-700">
                     Clear filters
                   </Text>
                 </Pressable>
               ) : (
-                <Text className="mt-1 text-center font-poppins text-xs text-ink-500">
+                <Text className="mt-1 text-center font-poppins text-caption text-ink-500">
                   Try a different word or check the spelling.
                 </Text>
               )}
@@ -432,7 +433,7 @@ function Pill({
       }`}
     >
       <Text
-        className={`font-poppins-medium text-xs ${active ? "text-white" : "text-ink-700"}`}
+        className={`font-poppins-medium text-caption ${active ? "text-white" : "text-ink-700"}`}
       >
         {label}
       </Text>

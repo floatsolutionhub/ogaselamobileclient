@@ -118,6 +118,8 @@ export default function ChangeContactScreen() {
   };
 
   const label = isPhone ? "phone number" : "email";
+  // One change at a time: wait for the pending one to be reviewed (or withdraw it).
+  const hasPending = change?.status === "PendingReview";
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -135,10 +137,10 @@ export default function ChangeContactScreen() {
         />
 
         <View className="rounded-3xl border border-brand-50 bg-white p-5">
-          <Text className="font-poppins-medium text-xs text-ink-500">
+          <Text className="font-poppins-medium text-caption text-ink-500">
             Current {label}
           </Text>
-          <Text className="mb-4 mt-0.5 font-poppins-semibold text-base text-ink-900">
+          <Text className="mb-4 mt-0.5 font-poppins-semibold text-subtitle text-ink-900">
             {current || "Not set"}
           </Text>
 
@@ -164,21 +166,21 @@ export default function ChangeContactScreen() {
                 }
                 touched={value.length > 0 && (sameAsCurrent || !valid)}
               />
-              <Text className="mb-4 font-poppins text-[11px] text-ink-500">
-                We'll send a code to the new {label} to confirm it's yours.
+              <Text className="mb-4 font-poppins text-micro text-ink-500">
+                We’ll send a code to the new {label} to confirm it’s yours.
                 After that, our team reviews the change before it takes
                 effect.
               </Text>
               <PrimaryButton
-                label="Send code"
+                label={hasPending ? "Waiting for review" : "Send code"}
                 onPress={sendCode}
                 loading={busy}
-                disabled={!valid || sameAsCurrent}
+                disabled={!valid || sameAsCurrent || hasPending}
               />
             </>
           ) : (
             <>
-              <Text className="mb-3 font-poppins text-sm text-ink-700">
+              <Text className="mb-3 font-poppins text-body text-ink-700">
                 Enter the 6-digit code sent to{" "}
                 <Text className="font-poppins-semibold">{trimmed}</Text>.
               </Text>
@@ -200,12 +202,12 @@ export default function ChangeContactScreen() {
               </View>
               <View className="mt-4 flex-row justify-between">
                 <Pressable onPress={() => setStep("enter")} hitSlop={8}>
-                  <Text className="font-poppins-medium text-xs text-ink-500">
+                  <Text className="font-poppins-medium text-caption text-ink-500">
                     Change {label}
                   </Text>
                 </Pressable>
                 <Pressable onPress={sendCode} disabled={busy} hitSlop={8}>
-                  <Text className="font-poppins-semibold text-xs text-brand-700">
+                  <Text className="font-poppins-semibold text-caption text-brand-700">
                     Resend code
                   </Text>
                 </Pressable>
@@ -215,7 +217,7 @@ export default function ChangeContactScreen() {
         </View>
 
         <Pressable onPress={() => router.back()} className="items-center">
-          <Text className="font-poppins-medium text-sm text-ink-500">Done</Text>
+          <Text className="font-poppins-medium text-body text-ink-500">Done</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

@@ -9,6 +9,7 @@ import { Pressable, Text } from "react-native";
 
 import type { VerificationTrackStatus } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 const STYLE: Record<
   VerificationTrackStatus | "Locked",
@@ -78,12 +79,12 @@ export function VerificationStatusPill({
       accessibilityLabel={`${label} verification: ${style.text}`}
       className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 active:opacity-80 ${style.bg}`}
     >
-      <style.Icon size={13} color={style.color} />
-      <Text className={`font-poppins-medium text-[11px] ${style.textColor}`}>
+      <style.Icon size={ICON.xs} color={style.color} />
+      <Text className={`font-poppins-medium text-micro ${style.textColor}`}>
         {label}: {style.text}
       </Text>
       {onPress && status !== "Verified" ? (
-        <ChevronRight size={12} color={style.color} />
+        <ChevronRight size={ICON.xs} color={style.color} />
       ) : null}
     </Pressable>
   );

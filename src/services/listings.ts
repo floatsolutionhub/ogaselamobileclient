@@ -71,9 +71,14 @@ export type ListingPaymentMethod = "Card" | "Wallet";
 /**
  * Submitted: paid (or free) and sent for review. PaymentRequired: open redirectUrl, then confirm.
  * PaymentPending: the gateway hasn't confirmed yet - confirm again shortly. PaymentFailed: not
- * paid; the ad is still a draft.
+ * paid; the ad is still a draft. PaymentCancelled: the seller left the payment page without paying.
  */
-export type ListingCheckoutOutcome = "Submitted" | "PaymentRequired" | "PaymentPending" | "PaymentFailed";
+export type ListingCheckoutOutcome =
+  | "Submitted"
+  | "PaymentRequired"
+  | "PaymentPending"
+  | "PaymentFailed"
+  | "PaymentCancelled";
 
 export interface ListingCheckout {
   outcome: ListingCheckoutOutcome;
@@ -90,6 +95,14 @@ export function checkout(id: string, promotionPlanId: string, paymentMethod: Lis
 /** After the card page closes: asks the gateway and, once paid, submits the ad. Safe to repeat. */
 export function confirmCheckout(id: string, reference: string): Promise<ListingCheckout> {
   return api.post<ListingCheckout>(`/listings/${id}/checkout/${encodeURIComponent(reference)}/confirm`);
+}
+
+/**
+ * After the seller closes the card page without paying: recorded as cancelled, unless the gateway
+ * says it was paid (then it's submitted) or is still in progress (PaymentPending).
+ */
+export function cancelCheckout(id: string, reference: string): Promise<ListingCheckout> {
+  return api.post<ListingCheckout>(`/listings/${id}/checkout/${encodeURIComponent(reference)}/cancel`);
 }
 
 export function getDetail(id: string): Promise<ListingDetail> {

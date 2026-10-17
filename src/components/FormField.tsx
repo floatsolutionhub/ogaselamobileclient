@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
 
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type FormFieldProps = TextInputProps & {
   label: string;
@@ -23,7 +24,7 @@ export function FormField({
   touched,
   secure,
   digitsOnly,
-  labelClassName = "mb-1.5 font-poppins-medium text-sm text-ink-700",
+  labelClassName = "mb-1.5 font-poppins-medium text-body text-ink-700",
   ...inputProps
 }: FormFieldProps) {
   const [hidden, setHidden] = useState(!!secure);
@@ -38,10 +39,10 @@ export function FormField({
         }`}
       >
         {Icon ? (
-          <Icon size={18} color={colors.ink500} style={{ marginRight: 10 }} />
+          <Icon size={ICON.md} color={colors.ink500} style={{ marginRight: 10 }} />
         ) : null}
         <TextInput
-          className="flex-1 py-3.5 font-poppins text-base text-ink-900"
+          className="flex-1 py-3.5 font-poppins text-subtitle text-ink-900"
           placeholderTextColor={colors.ink300}
           secureTextEntry={hidden}
           {...inputProps}
@@ -54,15 +55,15 @@ export function FormField({
         {secure ? (
           <Pressable onPress={() => setHidden((prev) => !prev)} hitSlop={8}>
             {hidden ? (
-              <EyeOff size={18} color={colors.ink500} />
+              <EyeOff size={ICON.md} color={colors.ink500} />
             ) : (
-              <Eye size={18} color={colors.ink500} />
+              <Eye size={ICON.md} color={colors.ink500} />
             )}
           </Pressable>
         ) : null}
       </View>
       {showError ? (
-        <Text className="mt-1 font-poppins text-xs text-danger">{error}</Text>
+        <Text className="mt-1 font-poppins text-caption text-danger">{error}</Text>
       ) : null}
     </View>
   );

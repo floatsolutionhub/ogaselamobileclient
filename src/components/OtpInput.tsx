@@ -25,7 +25,7 @@ export function OtpInput({
   length = 6,
   error,
 }: OtpInputProps) {
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [boxSize, setBoxSize] = useState(MAX_BOX);
   const digits = Array.from({ length }, (_, index) => value[index] ?? "");

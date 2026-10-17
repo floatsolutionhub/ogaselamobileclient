@@ -50,10 +50,10 @@ export default function SplashRoute() {
         <View className="rounded-3xl bg-white p-6">
           <Logo size={72} />
         </View>
-        <Text className="mt-5 font-poppins-bold text-2xl text-white">
+        <Text className="mt-5 font-poppins-bold text-display text-white">
           Ogasela
         </Text>
-        <Text className="mt-1 font-poppins text-sm text-white/80">
+        <Text className="mt-1 font-poppins text-body text-white/80">
           Quality products, genuine sellers
         </Text>
       </Animated.View>

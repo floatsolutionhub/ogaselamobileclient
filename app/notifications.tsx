@@ -10,6 +10,7 @@ import {
   FileCheck,
   FileX,
   MessageCircle,
+  PackageCheck,
   Scale,
   ShieldCheck,
   Star,
@@ -33,6 +34,7 @@ import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import * as inboxService from "@/services/inbox";
 import type { InboxNotification } from "@/services/inbox";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 const PAGE_SIZE = 20;
 
@@ -69,6 +71,11 @@ const TYPE_STYLE: Record<
   },
   DisputeResolved: {
     icon: Scale,
+    color: colors.brand600,
+    background: colors.brand50,
+  },
+  OfficePickupUpdate: {
+    icon: PackageCheck,
     color: colors.brand600,
     background: colors.brand50,
   },
@@ -155,7 +162,10 @@ export default function NotificationsScreen() {
         if (item.conversationId) {
           router.push({
             pathname: "/(modals)/conversation",
-            params: { conversationId: item.conversationId },
+            params: {
+              conversationId: item.conversationId,
+              ...(item.listingId ? { listingId: item.listingId } : {}),
+            },
           });
         }
         return;
@@ -166,6 +176,13 @@ export default function NotificationsScreen() {
           item.disputeId
             ? { pathname: "/disputes/[id]", params: { id: item.disputeId } }
             : "/disputes",
+        );
+        return;
+      case "OfficePickupUpdate":
+        router.push(
+          item.officePickupId
+            ? { pathname: "/office-pickups/[id]", params: { id: item.officePickupId } }
+            : "/office-pickups",
         );
         return;
       case "AdRejected":
@@ -209,9 +226,9 @@ export default function NotificationsScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="flex-1 font-poppins-bold text-2xl text-ink-900">
+        <Text className="flex-1 font-poppins-bold text-display text-ink-900">
           Notifications
         </Text>
         {unread > 0 ? (
@@ -220,8 +237,8 @@ export default function NotificationsScreen() {
             hitSlop={8}
             className="flex-row items-center gap-1"
           >
-            <BadgeCheck size={14} color={colors.brand600} />
-            <Text className="font-poppins-medium text-xs text-brand-600">
+            <BadgeCheck size={ICON.sm} color={colors.brand600} />
+            <Text className="font-poppins-medium text-caption text-brand-600">
               Mark all read
             </Text>
           </Pressable>
@@ -269,21 +286,21 @@ export default function NotificationsScreen() {
                   className="h-10 w-10 items-center justify-center rounded-full"
                   style={{ backgroundColor: style.background }}
                 >
-                  <Icon size={18} color={style.color} />
+                  <Icon size={ICON.md} color={style.color} />
                 </View>
                 <View className="flex-1">
                   <View className="flex-row items-start justify-between gap-2">
                     <Text
-                      className={`flex-1 text-sm text-ink-900 ${item.isRead ? "font-poppins-medium" : "font-poppins-semibold"}`}
+                      className={`flex-1 text-body text-ink-900 ${item.isRead ? "font-poppins-medium" : "font-poppins-semibold"}`}
                     >
                       {item.title}
                     </Text>
-                    <Text className="font-poppins text-[11px] text-ink-300">
+                    <Text className="font-poppins text-micro text-ink-300">
                       {moment(item.updatedAt).fromNow()}
                     </Text>
                   </View>
                   <Text
-                    className="mt-0.5 font-poppins text-xs leading-5 text-ink-700"
+                    className="mt-0.5 font-poppins text-caption leading-5 text-ink-700"
                     numberOfLines={3}
                   >
                     {item.body}
@@ -306,10 +323,10 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <View className="mt-10 items-center px-8">
               <View className="h-14 w-14 items-center justify-center rounded-full bg-brand-50">
-                <Bell size={22} color={colors.brand600} />
+                <Bell size={ICON.lg} color={colors.brand600} />
               </View>
-              <Text className="mt-3 text-center font-poppins text-sm text-ink-500">
-                You're all caught up. Ad approvals, messages and reviews will
+              <Text className="mt-3 text-center font-poppins text-body text-ink-500">
+                You’re all caught up. Ad approvals, messages and reviews will
                 show up here.
               </Text>
             </View>

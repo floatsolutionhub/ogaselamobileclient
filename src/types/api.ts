@@ -107,6 +107,8 @@ export interface Listing {
   instagramUrl?: string | null;
   /** Played in-app on the ad screen. */
   youTubeUrl?: string | null;
+  /** Whether the "Request Office Pickup" button shows - set per category in the Control Portal. */
+  officePickupAvailable?: boolean;
 }
 
 /** GET /listings/{id} - Listing plus what the ad detail screen needs. seller.phone is null unless signed in. */
@@ -223,7 +225,7 @@ export interface Wallet {
 }
 
 export type TransactionType = "PlanPurchase" | "AdSpendTopUp" | "Refund";
-export type TransactionStatus = "Pending" | "Success" | "Failed" | "Refunded";
+export type TransactionStatus = "Pending" | "Success" | "Failed" | "Refunded" | "Cancelled";
 
 export interface Transaction {
   id: string;

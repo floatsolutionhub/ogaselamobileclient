@@ -3,7 +3,6 @@ import { ExternalLink, FileText, Lock, X } from "lucide-react-native";
 import {
   Image,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -11,10 +10,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Modal } from "@/components/ActivityModal";
 import { DOCUMENT_STATUS_STYLE } from "@/components/DocumentRow";
 import { ID_TYPE_LABELS } from "@/components/DocumentUploadSheet";
 import type { UserDocument } from "@/services/me";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type DocumentDetailSheetProps = {
   /** null hides the sheet. */
@@ -64,12 +65,12 @@ export function DocumentDetailSheet({
         >
           <View className="mb-1 flex-row items-center justify-between px-6">
             <View className="flex-row items-center gap-2">
-              <Text className="font-poppins-semibold text-lg text-ink-900">
+              <Text className="font-poppins-semibold text-title text-ink-900">
                 {title}
               </Text>
               {status ? (
                 <Text
-                  className={`rounded-full px-2 py-0.5 font-poppins-medium text-[10px] ${status.className}`}
+                  className={`rounded-full px-2 py-0.5 font-poppins-medium text-micro ${status.className}`}
                 >
                   {status.label}
                 </Text>
@@ -80,12 +81,12 @@ export function DocumentDetailSheet({
               hitSlop={10}
               className="h-9 w-9 items-center justify-center rounded-full bg-surface"
             >
-              <X size={18} color={colors.ink700} />
+              <X size={ICON.md} color={colors.ink700} />
             </Pressable>
           </View>
           <View className="mb-3 flex-row items-center gap-1.5 px-6">
-            <Lock size={12} color={colors.ink500} />
-            <Text className="font-poppins text-xs text-ink-500">
+            <Lock size={ICON.xs} color={colors.ink500} />
+            <Text className="font-poppins text-caption text-ink-500">
               {lockNote}
             </Text>
           </View>
@@ -119,11 +120,11 @@ export function DocumentDetailSheet({
                   accessibilityRole="link"
                   className="mt-4 flex-row items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-3"
                 >
-                  <FileText size={20} color={colors.brand700} />
-                  <Text className="flex-1 font-poppins-medium text-sm text-ink-900">
+                  <FileText size={ICON.lg} color={colors.brand700} />
+                  <Text className="flex-1 font-poppins-medium text-body text-ink-900">
                     Open file
                   </Text>
-                  <ExternalLink size={16} color={colors.brand700} />
+                  <ExternalLink size={ICON.sm} color={colors.brand700} />
                 </Pressable>
               )}
             </ScrollView>
@@ -137,9 +138,9 @@ export function DocumentDetailSheet({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between border-b border-brand-50 py-3">
-      <Text className="font-poppins text-sm text-ink-500">{label}</Text>
+      <Text className="font-poppins text-body text-ink-500">{label}</Text>
       <Text
-        className="ml-4 flex-shrink font-poppins-medium text-sm text-ink-900"
+        className="ml-4 flex-shrink font-poppins-medium text-body text-ink-900"
         numberOfLines={1}
       >
         {value}

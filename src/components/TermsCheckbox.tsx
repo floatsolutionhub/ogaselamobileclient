@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { LINKS } from "@/config/links";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type TermsCheckboxProps = {
   checked: boolean;
@@ -31,10 +32,10 @@ export function TermsCheckbox({
             backgroundColor: checked ? colors.brand500 : "transparent",
           }}
         >
-          {checked ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : null}
+          {checked ? <Check size={ICON.sm} color="#FFFFFF" strokeWidth={3} /> : null}
         </Pressable>
         <Text
-          className="flex-1 font-poppins text-sm leading-5 text-ink-700"
+          className="flex-1 font-poppins text-body leading-5 text-ink-700"
           onPress={() => onChange(!checked)}
         >
           I agree to the{" "}
@@ -54,7 +55,7 @@ export function TermsCheckbox({
         </Text>
       </View>
       {error ? (
-        <Text className="mt-1 font-poppins text-xs text-danger">{error}</Text>
+        <Text className="mt-1 font-poppins text-caption text-danger">{error}</Text>
       ) : null}
     </View>
   );

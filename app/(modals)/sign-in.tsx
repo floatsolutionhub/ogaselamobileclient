@@ -17,10 +17,12 @@ import { SocialSignInButtons } from "@/components/SocialSignInButtons";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/apiClient";
 import { loginSchema } from "@/utils/validation";
+import { loginOtpCopy } from "@/utils/loginOtp";
+import type { LoginOtpSentResponse } from "@/services/auth";
 
 type Step =
   | { name: "credentials" }
-  | { name: "otp"; email: string; maskedEmail: string; maskedPhone: string };
+  | { name: "otp"; email: string; sent: LoginOtpSentResponse };
 
 export default function SignInSheet() {
   const { requestLoginOtp, verifyLoginOtp } = useAuth();
@@ -36,11 +38,11 @@ export default function SignInSheet() {
   }) {
     setSubmitting(true);
     try {
-      const { maskedEmail, maskedPhone } = await requestLoginOtp({
+      const sent = await requestLoginOtp({
         email: values.email,
         password: values.password,
       });
-      setStep({ name: "otp", email: values.email, maskedEmail, maskedPhone });
+      setStep({ name: "otp", email: values.email, sent });
     } catch (error) {
       const message =
         error instanceof ApiError
@@ -84,11 +86,11 @@ export default function SignInSheet() {
       <SheetScreen>
         <View className="items-center">
           <Logo size={40} />
-          <Text className="mt-3 font-poppins-bold text-xl text-ink-900">
-            Enter your code
+          <Text className="mt-3 font-poppins-bold text-heading text-ink-900">
+            {loginOtpCopy(step.sent).title}
           </Text>
-          <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
-            We sent a 6-digit code to {step.maskedEmail} and {step.maskedPhone}
+          <Text className="mt-1 text-center font-poppins text-body text-ink-500">
+            {loginOtpCopy(step.sent).message}
           </Text>
         </View>
 
@@ -102,8 +104,8 @@ export default function SignInSheet() {
             error={otpError}
           />
           {otpError ? (
-            <Text className="mt-3 text-center font-poppins text-xs text-danger">
-              That code doesn't look right.
+            <Text className="mt-3 text-center font-poppins text-caption text-danger">
+              That code doesn’t look right.
             </Text>
           ) : null}
 
@@ -117,7 +119,7 @@ export default function SignInSheet() {
         </View>
 
         <Text
-          className="mb-4 mt-6 text-center font-poppins-semibold text-sm text-brand-600"
+          className="mb-4 mt-6 text-center font-poppins-semibold text-body text-brand-600"
           onPress={() => {
             setStep({ name: "credentials" });
             setOtp("");
@@ -134,10 +136,10 @@ export default function SignInSheet() {
     <SheetScreen>
       <View className="items-center">
         <Logo size={40} />
-        <Text className="mt-3 font-poppins-bold text-xl text-ink-900">
+        <Text className="mt-3 font-poppins-bold text-heading text-ink-900">
           Welcome back
         </Text>
-        <Text className="mt-1 font-poppins text-sm text-ink-500">
+        <Text className="mt-1 font-poppins text-body text-ink-500">
           Sign in to continue to Ogasela
         </Text>
       </View>
@@ -180,7 +182,7 @@ export default function SignInSheet() {
             />
 
             <Text
-              className="mb-5 text-right font-poppins-medium text-sm text-brand-600"
+              className="mb-5 text-right font-poppins-medium text-body text-brand-600"
               onPress={() =>
                 router.replace({
                   pathname: "/(modals)/forgot-password",
@@ -201,11 +203,11 @@ export default function SignInSheet() {
       </Formik>
 
       <View className="mb-4 mt-6 flex-row justify-center gap-1">
-        <Text className="font-poppins text-sm text-ink-500">
-          Don't have an account?
+        <Text className="font-poppins text-body text-ink-500">
+          Don’t have an account?
         </Text>
         <Text
-          className="font-poppins-semibold text-sm text-brand-600"
+          className="font-poppins-semibold text-body text-brand-600"
           onPress={() =>
             router.replace({
               pathname: "/(modals)/sign-up-step1",
@@ -216,7 +218,7 @@ export default function SignInSheet() {
           Sign up
         </Text>
       </View>
-      <Text className="mb-4 text-center font-poppins text-xs leading-5 text-ink-500">
+      <Text className="mb-4 text-center font-poppins text-caption leading-5 text-ink-500">
         By continuing, you agree to our{" "}
         <Text
           className="font-poppins-medium text-brand-600"
@@ -233,15 +235,15 @@ export default function SignInSheet() {
         </Text>
         .
       </Text>
-      <View className="mt-5 flex-row items-center gap-3">
+      {/* <View className="mt-5 flex-row items-center gap-3">
         <View className="h-px flex-1 bg-brand-100" />
-        <Text className="font-poppins text-xs text-ink-500">
+        <Text className="font-poppins text-caption text-ink-500">
           or continue with
         </Text>
         <View className="h-px flex-1 bg-brand-100" />
-      </View>
+      </View> */}
 
-      <View className="mt-4 gap-3">
+      {/* <View className="mt-4 gap-3">
         <SocialButton
           provider="phone"
           label="Log in with phone number"
@@ -253,7 +255,7 @@ export default function SignInSheet() {
           }
         />
         <SocialSignInButtons mode="signin" redirect={redirect} />
-      </View>
+      </View> */}
     </SheetScreen>
   );
 }

@@ -2,6 +2,7 @@ import { Phone } from "lucide-react-native";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type SocialButtonProps = {
   provider: "google" | "facebook" | "phone";
@@ -17,7 +18,7 @@ function ProviderBadge({
   provider: SocialButtonProps["provider"];
 }) {
   if (provider === "phone") {
-    return <Phone size={18} color={colors.brand600} />;
+    return <Phone size={ICON.md} color={colors.brand600} />;
   }
 
   const isGoogle = provider === "google";
@@ -26,7 +27,7 @@ function ProviderBadge({
       className="h-5 w-5 items-center justify-center rounded-full"
       style={{ backgroundColor: isGoogle ? "#EA4335" : "#1877F2" }}
     >
-      <Text className="font-poppins-bold text-[11px] text-white">
+      <Text className="font-poppins-bold text-micro text-white">
         {isGoogle ? "G" : "f"}
       </Text>
     </View>
@@ -52,7 +53,7 @@ export function SocialButton({
       ) : (
         <ProviderBadge provider={provider} />
       )}
-      <Text className="font-poppins-medium text-sm text-ink-700">{label}</Text>
+      <Text className="font-poppins-medium text-body text-ink-700">{label}</Text>
     </Pressable>
   );
 }

@@ -13,10 +13,13 @@ import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/apiClient";
 import { colors } from "@/theme/colors";
 import { phonePasswordLoginSchema } from "@/utils/validation";
+import { ICON } from "@/theme/typography";
+import { loginOtpCopy } from "@/utils/loginOtp";
+import type { LoginOtpSentResponse } from "@/services/auth";
 
 type Step =
   | { name: "credentials" }
-  | { name: "otp"; phone: string; maskedEmail: string; maskedPhone: string };
+  | { name: "otp"; phone: string; sent: LoginOtpSentResponse };
 
 export default function SignInPhoneSheet() {
   const { requestLoginOtp, verifyLoginOtp } = useAuth();
@@ -32,11 +35,11 @@ export default function SignInPhoneSheet() {
   }) {
     setSubmitting(true);
     try {
-      const { maskedEmail, maskedPhone } = await requestLoginOtp({
+      const sent = await requestLoginOtp({
         phone: values.phone,
         password: values.password,
       });
-      setStep({ name: "otp", phone: values.phone, maskedEmail, maskedPhone });
+      setStep({ name: "otp", phone: values.phone, sent });
     } catch (error) {
       const message =
         error instanceof ApiError
@@ -80,13 +83,13 @@ export default function SignInPhoneSheet() {
       <SheetScreen>
         <View className="items-center">
           <View className="h-12 w-12 items-center justify-center rounded-2xl bg-brand-50">
-            <Phone size={22} color={colors.brand600} />
+            <Phone size={ICON.lg} color={colors.brand600} />
           </View>
-          <Text className="mt-3 font-poppins-bold text-xl text-ink-900">
-            Enter your code
+          <Text className="mt-3 font-poppins-bold text-heading text-ink-900">
+            {loginOtpCopy(step.sent).title}
           </Text>
-          <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
-            We sent a 6-digit code to {step.maskedEmail} and {step.maskedPhone}
+          <Text className="mt-1 text-center font-poppins text-body text-ink-500">
+            {loginOtpCopy(step.sent).message}
           </Text>
         </View>
 
@@ -100,8 +103,8 @@ export default function SignInPhoneSheet() {
             error={otpError}
           />
           {otpError ? (
-            <Text className="mt-3 text-center font-poppins text-xs text-danger">
-              That code doesn't look right.
+            <Text className="mt-3 text-center font-poppins text-caption text-danger">
+              That code doesn’t look right.
             </Text>
           ) : null}
 
@@ -115,7 +118,7 @@ export default function SignInPhoneSheet() {
         </View>
 
         <Text
-          className="mb-4 mt-6 text-center font-poppins-semibold text-sm text-brand-600"
+          className="mb-4 mt-6 text-center font-poppins-semibold text-body text-brand-600"
           onPress={() => {
             setStep({ name: "credentials" });
             setOtp("");
@@ -132,12 +135,12 @@ export default function SignInPhoneSheet() {
     <SheetScreen>
       <View className="items-center">
         <View className="h-12 w-12 items-center justify-center rounded-2xl bg-brand-50">
-          <Phone size={22} color={colors.brand600} />
+          <Phone size={ICON.lg} color={colors.brand600} />
         </View>
-        <Text className="mt-3 font-poppins-bold text-xl text-ink-900">
+        <Text className="mt-3 font-poppins-bold text-heading text-ink-900">
           Log in with phone
         </Text>
-        <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
+        <Text className="mt-1 text-center font-poppins text-body text-ink-500">
           Sign in with your phone number and password.
         </Text>
       </View>
@@ -189,7 +192,7 @@ export default function SignInPhoneSheet() {
       </Formik>
 
       <Text
-        className="mb-4 mt-5 text-center font-poppins-semibold text-sm text-brand-600"
+        className="mb-4 mt-5 text-center font-poppins-semibold text-body text-brand-600"
         onPress={() =>
           router.replace({
             pathname: "/(modals)/sign-in",

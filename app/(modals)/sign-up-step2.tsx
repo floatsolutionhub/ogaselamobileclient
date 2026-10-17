@@ -19,10 +19,13 @@ import {
 } from "@/lib/signUpDraft";
 import { colors } from "@/theme/colors";
 import { registerStepTwoSchema } from "@/utils/validation";
+import { ICON } from "@/theme/typography";
+import { loginOtpCopy } from "@/utils/loginOtp";
+import type { LoginOtpSentResponse } from "@/services/auth";
 
 type Step =
   | { name: "details" }
-  | { name: "otp"; maskedEmail: string; maskedPhone: string };
+  | { name: "otp"; sent: LoginOtpSentResponse };
 
 export default function SignUpStepTwoSheet() {
   const { registerThenRequestLoginOtp, verifyLoginOtp } = useAuth();
@@ -94,11 +97,11 @@ export default function SignUpStepTwoSheet() {
     return (
       <SheetScreen>
         <View className="items-center">
-          <Text className="font-poppins-bold text-xl text-ink-900">
-            Enter your code
+          <Text className="font-poppins-bold text-heading text-ink-900">
+            {loginOtpCopy(step.sent).title}
           </Text>
-          <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
-            We sent a 6-digit code to {step.maskedEmail} and {step.maskedPhone}
+          <Text className="mt-1 text-center font-poppins text-body text-ink-500">
+            {loginOtpCopy(step.sent).message}
           </Text>
         </View>
 
@@ -112,8 +115,8 @@ export default function SignUpStepTwoSheet() {
             error={otpError}
           />
           {otpError ? (
-            <Text className="mt-3 text-center font-poppins text-xs text-danger">
-              That code doesn't look right.
+            <Text className="mt-3 text-center font-poppins text-caption text-danger">
+              That code doesn’t look right.
             </Text>
           ) : null}
 
@@ -132,10 +135,10 @@ export default function SignUpStepTwoSheet() {
   return (
     <SheetScreen>
       <View className="items-center">
-        <Text className="font-poppins-bold text-xl text-ink-900">
+        <Text className="font-poppins-bold text-heading text-ink-900">
           Secure your account
         </Text>
-        <Text className="mt-1 text-center font-poppins text-sm text-ink-500">
+        <Text className="mt-1 text-center font-poppins text-body text-ink-500">
           Step 2 of 2 · Almost there, {fullName?.split(" ")[0] || "there"}
         </Text>
       </View>
@@ -156,7 +159,7 @@ export default function SignUpStepTwoSheet() {
         onSubmit={async (values) => {
           setSubmitting(true);
           try {
-            const { maskedEmail, maskedPhone } =
+            const sent =
               await registerThenRequestLoginOtp({
                 fullName,
                 email,
@@ -165,7 +168,7 @@ export default function SignUpStepTwoSheet() {
                 accountType: "Seller",
                 businessName: values.businessName,
               });
-            setStep({ name: "otp", maskedEmail, maskedPhone });
+            setStep({ name: "otp", sent });
           } catch (error) {
             const message =
               error instanceof ApiError
@@ -243,8 +246,8 @@ export default function SignUpStepTwoSheet() {
               hitSlop={8}
               className="mt-4 flex-row items-center justify-center gap-1 rounded-2xl border border-brand-100 bg-white py-3.5"
             >
-              <ChevronLeft size={18} color={colors.ink700} />
-              <Text className="font-poppins-medium text-sm text-ink-700">
+              <ChevronLeft size={ICON.md} color={colors.ink700} />
+              <Text className="font-poppins-medium text-body text-ink-700">
                 Previous step
               </Text>
             </Pressable>

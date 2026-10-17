@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useUnreadMessages } from "@/context/UnreadMessagesContext";
 import { colors } from "@/theme/colors";
+import { FONT, TYPE } from "@/theme/typography";
 
 function useGuardedTabPress(redirect: string) {
   const { isAuthenticated } = useAuth();
@@ -33,10 +34,10 @@ export default function AppLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.brand600,
         tabBarInactiveTintColor: colors.ink300,
-        tabBarLabelStyle: { fontFamily: "Poppins_500Medium", fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: FONT.medium, fontSize: TYPE.micro.fontSize },
         tabBarStyle: {
           borderTopColor: colors.brand50,
-          height: 56 + insets.bottom,
+          height: 62 + insets.bottom,
           paddingTop: 8,
           paddingBottom: Math.max(insets.bottom, 8),
         },
@@ -73,8 +74,8 @@ export default function AppLayout() {
             unreadCount > 0 ? (unreadCount > 99 ? "99+" : unreadCount) : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.danger,
-            fontFamily: "Poppins_600SemiBold",
-            fontSize: 10,
+            fontFamily: FONT.semibold,
+            fontSize: 11,
           },
           tabBarIcon: ({ color, size }) => (
             <MessageCircle color={color} size={size} />

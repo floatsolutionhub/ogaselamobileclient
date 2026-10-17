@@ -14,7 +14,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -23,6 +22,7 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { Modal } from "@/components/ActivityModal";
 import { FormField } from "@/components/FormField";
 import { GradientScreen } from "@/components/GradientScreen";
 import { PostStepProgress } from "@/components/PostStepProgress";
@@ -45,9 +45,10 @@ import {
   type SocialPlatform,
 } from "@/utils/socialLinks";
 import { createListingSchema } from "@/utils/validation";
+import { ICON } from "@/theme/typography";
 
 /** Form labels on this screen are bigger and bolder than the app default. */
-const LABEL = "mb-2 font-poppins-semibold text-base text-ink-900";
+const LABEL = "mb-2 font-poppins-semibold text-subtitle text-ink-900";
 
 /** The form field holding each platform's link. */
 const LINK_FIELD: Record<SocialPlatform, "youTubeUrl" | "tikTokUrl" | "instagramUrl" | "facebookUrl"> = {
@@ -482,10 +483,10 @@ export default function PostScreen() {
   return (
     <GradientScreen scroll={false}>
       <View className="px-6 pt-6">
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           {listingId ? "Edit your ad" : "Post an ad"}
         </Text>
-        <Text className="mt-1 font-poppins text-sm text-ink-500">
+        <Text className="mt-1 font-poppins text-body text-ink-500">
           {listingId
             ? "Saved as a draft - finish it any time from My Ads."
             : isNationwide
@@ -542,14 +543,14 @@ export default function PostScreen() {
               ))}
             </View>
             {errors.categoryId ? (
-              <Text className="mt-2 font-poppins text-xs text-danger">{errors.categoryId}</Text>
+              <Text className="mt-2 font-poppins text-caption text-danger">{errors.categoryId}</Text>
             ) : null}
 
             {category && category.children.length > 0 ? (
               <>
                 <Text className={`mt-5 ${LABEL}`}>
                   Sub Category{" "}
-                  <Text className="font-poppins text-sm text-ink-500">(optional)</Text>
+                  <Text className="font-poppins text-body text-ink-500">(optional)</Text>
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
                   {category.children.map((c) => (
@@ -576,7 +577,7 @@ export default function PostScreen() {
                       active ? "border-brand-600 bg-brand-600" : "border-brand-100 bg-surface"
                     }`}
                   >
-                    <Text className={`font-poppins-medium text-sm ${active ? "text-white" : "text-ink-700"}`}>
+                    <Text className={`font-poppins-medium text-body ${active ? "text-white" : "text-ink-700"}`}>
                       {option}
                     </Text>
                   </Pressable>
@@ -584,7 +585,7 @@ export default function PostScreen() {
               })}
             </View>
             {errors.condition ? (
-              <Text className="mt-1 font-poppins text-xs text-danger">{errors.condition}</Text>
+              <Text className="mt-1 font-poppins text-caption text-danger">{errors.condition}</Text>
             ) : null}
 
             {values.condition === "Used" ? (
@@ -599,13 +600,13 @@ export default function PostScreen() {
                     values.hasReceipt ? "border-brand-600 bg-brand-600" : "border-ink-300 bg-white"
                   }`}
                 >
-                  {values.hasReceipt ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
+                  {values.hasReceipt ? <Check size={ICON.sm} color={colors.white} strokeWidth={3} /> : null}
                 </View>
                 <View className="flex-1">
-                  <Text className="font-poppins-semibold text-sm text-ink-900">
+                  <Text className="font-poppins-semibold text-body text-ink-900">
                     I have the original receipt of purchase
                   </Text>
-                  <Text className="font-poppins text-xs text-ink-500">
+                  <Text className="font-poppins text-caption text-ink-500">
                     Your ad will tell buyers whether a receipt comes with it.
                   </Text>
                 </View>
@@ -616,7 +617,7 @@ export default function PostScreen() {
 
         {current.key === "photos" ? (
           <>
-            <Text className="mb-4 font-poppins text-xs text-ink-500">
+            <Text className="mb-4 font-poppins text-caption text-ink-500">
               Up to {MAX_PHOTOS} photos. The first one is your cover - and helps our AI write your description.
             </Text>
             <View className="flex-row flex-wrap gap-3">
@@ -629,7 +630,7 @@ export default function PostScreen() {
                   />
                   {index === 0 ? (
                     <View className="absolute bottom-1.5 left-1.5 rounded-full bg-ink-900/70 px-2 py-0.5">
-                      <Text className="font-poppins-medium text-[10px] text-white">Cover</Text>
+                      <Text className="font-poppins-medium text-micro text-white">Cover</Text>
                     </View>
                   ) : null}
                   <Pressable
@@ -638,7 +639,7 @@ export default function PostScreen() {
                     accessibilityLabel="Remove photo"
                     className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-ink-900"
                   >
-                    <X size={14} color="#FFFFFF" />
+                    <X size={ICON.xs} color="#FFFFFF" />
                   </Pressable>
                 </View>
               ))}
@@ -650,11 +651,11 @@ export default function PostScreen() {
                   className="h-28 w-28 items-center justify-center rounded-2xl border border-dashed border-brand-200 bg-white"
                 >
                   {photos.length === 0 ? (
-                    <Camera size={22} color={colors.brand500} />
+                    <Camera size={ICON.lg} color={colors.brand500} />
                   ) : (
-                    <Plus size={22} color={colors.brand500} />
+                    <Plus size={ICON.lg} color={colors.brand500} />
                   )}
-                  <Text className="mt-1 font-poppins-medium text-[11px] text-brand-600">
+                  <Text className="mt-1 font-poppins-medium text-micro text-brand-600">
                     {photos.length === 0 ? "Add photos" : "Add more"}
                   </Text>
                 </Pressable>
@@ -666,7 +667,7 @@ export default function PostScreen() {
         {current.key === "copy" ? (
           <>
             <View className="mb-1.5 flex-row items-center justify-between">
-              <Text className="font-poppins-semibold text-base text-ink-900">Description</Text>
+              <Text className="font-poppins-semibold text-subtitle text-ink-900">Description</Text>
               <AiButton label="Suggest with AI" loading={aiLoading} onPress={() => suggestDescription()} />
             </View>
             <TextInput
@@ -677,13 +678,13 @@ export default function PostScreen() {
               placeholderTextColor={colors.ink300}
               value={values.description}
               onChangeText={(text) => set("description", text)}
-              className={`rounded-2xl border bg-surface px-4 py-3.5 font-poppins text-base text-ink-900 ${
+              className={`rounded-2xl border bg-surface px-4 py-3.5 font-poppins text-subtitle text-ink-900 ${
                 errors.description ? "border-danger" : "border-brand-100"
               }`}
               style={{ minHeight: 140 }}
             />
             {errors.description ? (
-              <Text className="mt-1 font-poppins text-xs text-danger">{errors.description}</Text>
+              <Text className="mt-1 font-poppins text-caption text-danger">{errors.description}</Text>
             ) : null}
 
             <View className="mt-5" />
@@ -705,9 +706,9 @@ export default function PostScreen() {
             <AiNote loading={aiLoading} note={aiNote} />
 
             <Text className={`mt-6 ${LABEL}`}>
-              Social links <Text className="font-poppins text-sm text-ink-500">(optional)</Text>
+              Social links <Text className="font-poppins text-body text-ink-500">(optional)</Text>
             </Text>
-            <Text className="-mt-1 mb-3 font-poppins text-xs text-ink-500">
+            <Text className="-mt-1 mb-3 font-poppins text-caption text-ink-500">
               Got this item on TikTok, Instagram, Facebook or YouTube? Add the link - buyers can open it from
               your ad, and YouTube videos play right on it.
             </Text>
@@ -738,7 +739,7 @@ export default function PostScreen() {
             accessibilityLabel="Back"
             className="h-14 w-14 items-center justify-center rounded-2xl border border-brand-100 bg-white"
           >
-            <ChevronLeft size={20} color={colors.ink700} />
+            <ChevronLeft size={ICON.lg} color={colors.ink700} />
           </Pressable>
         ) : null}
         <View className="flex-1">
@@ -751,7 +752,7 @@ export default function PostScreen() {
         </View>
       </View>
       {busy ? (
-        <Text className="pb-3 text-center font-poppins text-xs text-ink-500">{busy}</Text>
+        <Text className="pb-3 text-center font-poppins text-caption text-ink-500">{busy}</Text>
       ) : null}
 
       <Modal visible={!!suggestion} transparent animationType="fade" onRequestClose={() => closeSuggestion(false)}>
@@ -759,32 +760,32 @@ export default function PostScreen() {
           <View className="w-full rounded-3xl bg-white p-6">
             <View className="mb-3 flex-row items-center gap-2">
               <View className="h-9 w-9 items-center justify-center rounded-full bg-brand-50">
-                <Sparkles size={18} color={colors.brand600} />
+                <Sparkles size={ICON.md} color={colors.brand600} />
               </View>
-              <Text className="font-poppins-semibold text-lg text-ink-900">
+              <Text className="font-poppins-semibold text-title text-ink-900">
                 {suggestion?.kind === "price" ? "Suggested price" : "AI description"}
               </Text>
             </View>
 
             {suggestion?.kind === "description" ? (
               <ScrollView style={{ maxHeight: 260 }} className="rounded-2xl bg-surface p-4">
-                <Text className="font-poppins text-sm leading-5 text-ink-700">{suggestion.description}</Text>
+                <Text className="font-poppins text-body leading-5 text-ink-700">{suggestion.description}</Text>
               </ScrollView>
             ) : null}
 
             {suggestion?.kind === "price" ? (
               <View className="items-center rounded-2xl bg-surface p-4">
-                <Text className="font-poppins-bold text-3xl text-ink-900">
+                <Text className="font-poppins-bold text-hero text-ink-900">
                   {formatNaira(suggestion.suggested)}
                 </Text>
-                <Text className="mt-1 text-center font-poppins text-xs text-ink-500">
+                <Text className="mt-1 text-center font-poppins text-caption text-ink-500">
                   Similar ads sold for {formatNaira(suggestion.min)} - {formatNaira(suggestion.max)} (
                   {suggestion.comparables} {suggestion.comparables === 1 ? "ad" : "ads"})
                 </Text>
               </View>
             ) : null}
 
-            <Text className="mt-4 font-poppins text-sm text-ink-700">
+            <Text className="mt-4 font-poppins text-body text-ink-700">
               {suggestion?.kind === "price"
                 ? "Would you like to use this price? You can still change it."
                 : "Would you like to use this description? You can still edit it."}
@@ -795,14 +796,14 @@ export default function PostScreen() {
                 onPress={() => closeSuggestion(false)}
                 className="flex-1 items-center rounded-2xl border border-brand-100 py-3.5"
               >
-                <Text className="font-poppins-semibold text-sm text-ink-700">No, thanks</Text>
+                <Text className="font-poppins-semibold text-body text-ink-700">No, thanks</Text>
               </Pressable>
               <Pressable
                 onPress={() => closeSuggestion(true)}
                 className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-brand-600 py-3.5"
               >
-                <Check size={16} color={colors.white} />
-                <Text className="font-poppins-semibold text-sm text-white">Yes, use it</Text>
+                <Check size={ICON.sm} color={colors.white} />
+                <Text className="font-poppins-semibold text-body text-white">Yes, use it</Text>
               </Pressable>
             </View>
           </View>
@@ -820,7 +821,7 @@ function Chip({ label, selected, onPress }: { label: string; selected: boolean; 
       accessibilityState={{ selected }}
       className={`rounded-full border px-4 py-2.5 ${selected ? "border-brand-600 bg-brand-600" : "border-brand-100 bg-white"}`}
     >
-      <Text className={`font-poppins-medium text-sm ${selected ? "text-white" : "text-ink-700"}`}>{label}</Text>
+      <Text className={`font-poppins-medium text-body ${selected ? "text-white" : "text-ink-700"}`}>{label}</Text>
     </Pressable>
   );
 }
@@ -834,8 +835,8 @@ function AiButton({ label, loading, onPress }: { label: string; loading: boolean
       className="flex-row items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5"
       style={{ opacity: loading ? 0.6 : 1 }}
     >
-      <Sparkles size={14} color={colors.brand600} />
-      <Text className="font-poppins-semibold text-xs text-brand-700">{label}</Text>
+      <Sparkles size={ICON.sm} color={colors.brand600} />
+      <Text className="font-poppins-semibold text-caption text-brand-700">{label}</Text>
     </Pressable>
   );
 }
@@ -845,9 +846,9 @@ function AiNote({ loading, note }: { loading: boolean; note: string | null }) {
     return (
       <View className="mt-3 flex-row items-center gap-2">
         <ActivityIndicator size="small" color={colors.brand600} />
-        <Text className="font-poppins text-xs text-ink-500">Getting an AI suggestion...</Text>
+        <Text className="font-poppins text-caption text-ink-500">Getting an AI suggestion...</Text>
       </View>
     );
   }
-  return note ? <Text className="mt-3 font-poppins text-xs text-ink-500">{note}</Text> : null;
+  return note ? <Text className="mt-3 font-poppins text-caption text-ink-500">{note}</Text> : null;
 }

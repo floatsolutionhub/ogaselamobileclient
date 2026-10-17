@@ -1,9 +1,11 @@
 import { Check, X } from "lucide-react-native";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Modal } from "@/components/ActivityModal";
 import type { CategoryNode } from "@/hooks/useCategoryTree";
 import { colors } from "@/theme/colors";
+import { ICON } from "@/theme/typography";
 
 type CategoryFilterSheetProps = {
   visible: boolean;
@@ -56,7 +58,7 @@ export function CategoryFilterSheet({
           }}
         >
           <View className="mb-2 flex-row items-center justify-between px-6">
-            <Text className="font-poppins-semibold text-lg text-ink-900">
+            <Text className="font-poppins-semibold text-title text-ink-900">
               Show Hot Picks from
             </Text>
             <Pressable
@@ -64,7 +66,7 @@ export function CategoryFilterSheet({
               hitSlop={10}
               className="h-9 w-9 items-center justify-center rounded-full bg-surface"
             >
-              <X size={18} color={colors.ink700} />
+              <X size={ICON.md} color={colors.ink700} />
             </Pressable>
           </View>
 
@@ -106,7 +108,7 @@ export function CategoryFilterSheet({
                           }`}
                         >
                           <Text
-                            className={`font-poppins-medium text-xs ${selected ? "text-white" : "text-ink-700"}`}
+                            className={`font-poppins-medium text-caption ${selected ? "text-white" : "text-ink-700"}`}
                           >
                             {child.name}
                           </Text>
@@ -141,11 +143,11 @@ function Row({
       className="flex-row items-center justify-between border-b border-brand-50 py-3.5"
     >
       <Text
-        className={`font-poppins-medium text-sm ${selected ? "text-brand-700" : "text-ink-900"}`}
+        className={`font-poppins-medium text-body ${selected ? "text-brand-700" : "text-ink-900"}`}
       >
         {label}
       </Text>
-      {selected ? <Check size={18} color={colors.brand600} /> : null}
+      {selected ? <Check size={ICON.md} color={colors.brand600} /> : null}
     </Pressable>
   );
 }

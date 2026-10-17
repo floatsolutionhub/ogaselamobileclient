@@ -43,6 +43,7 @@ import * as messagingService from "@/services/messaging";
 import { colors } from "@/theme/colors";
 import { compressImage, MAX_EDGE } from "@/utils/photos";
 import type { Conversation, ListingDetail } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 const MIN_DESCRIPTION = 20;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -198,9 +199,9 @@ export default function NewDisputeScreen() {
           accessibilityLabel="Back"
           className="h-10 w-10 items-center justify-center rounded-full bg-white"
         >
-          <ChevronLeft size={20} color={colors.ink700} />
+          <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-2xl text-ink-900">
+        <Text className="font-poppins-bold text-display text-ink-900">
           Open a dispute
         </Text>
       </View>
@@ -208,7 +209,7 @@ export default function NewDisputeScreen() {
       {loading ? (
         <ActivityIndicator color={colors.brand600} style={{ marginTop: 40 }} />
       ) : !listing ? (
-        <Text className="px-6 pt-6 text-center font-poppins text-sm text-ink-500">
+        <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">
           This ad could not be found.
         </Text>
       ) : (
@@ -236,12 +237,12 @@ export default function NewDisputeScreen() {
               )}
               <View className="flex-1">
                 <Text
-                  className="font-poppins-semibold text-sm text-ink-900"
+                  className="font-poppins-semibold text-body text-ink-900"
                   numberOfLines={2}
                 >
                   {listing.title}
                 </Text>
-                <Text className="font-poppins text-xs text-ink-500">
+                <Text className="font-poppins text-caption text-ink-500">
                   {isSeller
                     ? "Your ad"
                     : `Sold by ${listing.seller.businessName}`}
@@ -251,14 +252,14 @@ export default function NewDisputeScreen() {
 
             {isSeller && !params.conversationId ? (
               <View className="rounded-3xl border border-brand-50 bg-white p-5">
-                <Text className="font-poppins-semibold text-base text-ink-900">
+                <Text className="font-poppins-semibold text-subtitle text-ink-900">
                   Which buyer?
                 </Text>
-                <Text className="mb-3 mt-0.5 font-poppins text-xs text-ink-500">
+                <Text className="mb-3 mt-0.5 font-poppins text-caption text-ink-500">
                   Choose your chat with the buyer this is about.
                 </Text>
                 {chats.length === 0 ? (
-                  <Text className="font-poppins text-sm text-ink-500">
+                  <Text className="font-poppins text-body text-ink-500">
                     No buyer has chatted with you about this ad yet.
                   </Text>
                 ) : (
@@ -270,11 +271,11 @@ export default function NewDisputeScreen() {
                         onPress={() => setConversationId(chat.id)}
                         className={`mb-2 flex-row items-center gap-3 rounded-2xl border px-4 py-3 ${selected ? "border-brand-600 bg-brand-50" : "border-brand-50"}`}
                       >
-                        <MessageCircle size={16} color={colors.brand600} />
-                        <Text className="flex-1 font-poppins-medium text-sm text-ink-900">
+                        <MessageCircle size={ICON.sm} color={colors.brand600} />
+                        <Text className="flex-1 font-poppins-medium text-body text-ink-900">
                           Buyer chat {index + 1}
                         </Text>
-                        <Text className="font-poppins text-xs text-ink-500">
+                        <Text className="font-poppins text-caption text-ink-500">
                           {new Date(
                             chat.lastMessageAt ?? chat.createdAt,
                           ).toLocaleDateString("en-NG")}
@@ -287,7 +288,7 @@ export default function NewDisputeScreen() {
             ) : null}
 
             <View className="rounded-3xl border border-brand-50 bg-white p-5">
-              <Text className="mb-3 font-poppins-semibold text-base text-ink-900">
+              <Text className="mb-3 font-poppins-semibold text-subtitle text-ink-900">
                 What went wrong?
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -300,7 +301,7 @@ export default function NewDisputeScreen() {
                       className={`rounded-full border px-4 py-2 ${selected ? "border-brand-600 bg-brand-600" : "border-brand-100 bg-white"}`}
                     >
                       <Text
-                        className={`font-poppins-medium text-xs ${selected ? "text-white" : "text-ink-700"}`}
+                        className={`font-poppins-medium text-caption ${selected ? "text-white" : "text-ink-700"}`}
                       >
                         {DISPUTE_REASON_LABELS[r]}
                       </Text>
@@ -311,10 +312,10 @@ export default function NewDisputeScreen() {
             </View>
 
             <View className="rounded-3xl border border-brand-50 bg-white p-5">
-              <Text className="font-poppins-semibold text-base text-ink-900">
+              <Text className="font-poppins-semibold text-subtitle text-ink-900">
                 Tell us what happened
               </Text>
-              <Text className="mb-3 mt-0.5 font-poppins text-xs text-ink-500">
+              <Text className="mb-3 mt-0.5 font-poppins text-caption text-ink-500">
                 Include dates, amounts paid and how you paid. The other party
                 will see this.
               </Text>
@@ -325,10 +326,10 @@ export default function NewDisputeScreen() {
                 maxLength={2000}
                 placeholder="e.g. I paid ₦45,000 by transfer on 12 March and the phone hasn't been delivered."
                 placeholderTextColor={colors.ink300}
-                className="min-h-[120px] rounded-2xl border border-brand-50 bg-surface px-4 py-3 font-poppins text-sm text-ink-900"
+                className="min-h-[120px] rounded-2xl border border-brand-50 bg-surface px-4 py-3 font-poppins text-body text-ink-900"
                 style={{ textAlignVertical: "top" }}
               />
-              <Text className="mt-1 text-right font-poppins text-[11px] text-ink-500">
+              <Text className="mt-1 text-right font-poppins text-micro text-ink-500">
                 {description.trim().length < MIN_DESCRIPTION
                   ? `${MIN_DESCRIPTION - description.trim().length} more characters needed`
                   : `${description.length}/2000`}
@@ -336,10 +337,10 @@ export default function NewDisputeScreen() {
             </View>
 
             <View className="rounded-3xl border border-brand-50 bg-white p-5">
-              <Text className="font-poppins-semibold text-base text-ink-900">
+              <Text className="font-poppins-semibold text-subtitle text-ink-900">
                 Evidence (optional)
               </Text>
-              <Text className="mb-3 mt-0.5 font-poppins text-xs text-ink-500">
+              <Text className="mb-3 mt-0.5 font-poppins text-caption text-ink-500">
                 Up to {MAX_EVIDENCE_FILES} photos or PDFs - receipts, transfer
                 screenshots, photos of the item.
               </Text>
@@ -349,9 +350,9 @@ export default function NewDisputeScreen() {
                     <View key={`${file.uri}-${index}`}>
                       {file.type === "application/pdf" ? (
                         <View className="h-20 w-20 items-center justify-center rounded-xl bg-brand-50">
-                          <FileText size={22} color={colors.brand600} />
+                          <FileText size={ICON.lg} color={colors.brand600} />
                           <Text
-                            className="mt-1 px-1 font-poppins text-[10px] text-ink-500"
+                            className="mt-1 px-1 font-poppins text-micro text-ink-500"
                             numberOfLines={1}
                           >
                             {file.name}
@@ -371,7 +372,7 @@ export default function NewDisputeScreen() {
                         accessibilityLabel="Remove file"
                         className="absolute -right-1.5 -top-1.5 h-6 w-6 items-center justify-center rounded-full bg-ink-900"
                       >
-                        <X size={12} color={colors.white} />
+                        <X size={ICON.xs} color={colors.white} />
                       </Pressable>
                     </View>
                   ))}
@@ -404,7 +405,7 @@ export default function NewDisputeScreen() {
               loading={submitting}
               disabled={!canSubmit}
             />
-            <Text className="text-center font-poppins text-[11px] text-ink-500">
+            <Text className="text-center font-poppins text-micro text-ink-500">
               Our team reviews every dispute and may contact both of you before
               deciding.
             </Text>
@@ -429,8 +430,8 @@ function EvidenceButton({
       onPress={onPress}
       className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-brand-100 py-3 active:bg-brand-50"
     >
-      <Icon size={16} color={colors.brand600} />
-      <Text className="font-poppins-medium text-xs text-brand-700">
+      <Icon size={ICON.sm} color={colors.brand600} />
+      <Text className="font-poppins-medium text-caption text-brand-700">
         {label}
       </Text>
     </Pressable>

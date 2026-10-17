@@ -53,10 +53,10 @@ export default function LocationPermissionSheet() {
         <View className="h-16 w-16 items-center justify-center rounded-full bg-brand-50">
           <MapPin size={28} color={colors.brand600} />
         </View>
-        <Text className="mt-5 text-center font-poppins-bold text-xl text-ink-900">
+        <Text className="mt-5 text-center font-poppins-bold text-heading text-ink-900">
           Find things near you
         </Text>
-        <Text className="mt-2 text-center font-poppins text-sm leading-5 text-ink-500">
+        <Text className="mt-2 text-center font-poppins text-body leading-5 text-ink-500">
           Ogasela uses your location to show listings and sellers close to
           you, and to help buyers find what you post. You can change this
           anytime from the location picker.
@@ -75,7 +75,7 @@ export default function LocationPermissionSheet() {
         onPress={() => router.replace("/(modals)/location-picker")}
         className="mb-4 mt-4 items-center py-2"
       >
-        <Text className="font-poppins-semibold text-sm text-brand-600">
+        <Text className="font-poppins-semibold text-body text-brand-600">
           Choose my area manually
         </Text>
       </Pressable>

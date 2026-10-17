@@ -14,7 +14,7 @@ export function PostStepProgress({ current }: { current: number }) {
           />
         ))}
       </View>
-      <Text className="mt-2 font-poppins-medium text-xs text-ink-500">
+      <Text className="mt-2 font-poppins-medium text-caption text-ink-500">
         Step {current + 1} of {POST_STEPS.length} · {POST_STEPS[current]}
       </Text>
     </>

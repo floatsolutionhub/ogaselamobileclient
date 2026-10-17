@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+import { ChatOfficePickupPrompt } from "@/components/ChatOfficePickupPrompt";
 import { ChatSafetyNotice } from "@/components/ChatSafetyNotice";
 import { useAuth } from "@/context/AuthContext";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
@@ -24,6 +25,7 @@ import { useMessagingHub } from "@/lib/messagingHub";
 import * as messagingService from "@/services/messaging";
 import { colors } from "@/theme/colors";
 import type { Message } from "@/types/api";
+import { ICON } from "@/theme/typography";
 
 export default function ConversationScreen() {
   useProtectedRoute("/(app)/messages");
@@ -140,10 +142,10 @@ export default function ConversationScreen() {
             hitSlop={12}
             className="h-9 w-9 items-center justify-center rounded-full bg-surface"
           >
-            <ChevronLeft size={20} color={colors.ink700} />
+            <ChevronLeft size={ICON.lg} color={colors.ink700} />
           </Pressable>
           <Text
-            className="flex-1 font-poppins-semibold text-base text-ink-900"
+            className="flex-1 font-poppins-semibold text-subtitle text-ink-900"
             numberOfLines={1}
           >
             {title ?? "Conversation"}
@@ -161,8 +163,8 @@ export default function ConversationScreen() {
               accessibilityLabel="Open a dispute about this deal"
               className="flex-row items-center gap-1 rounded-full bg-surface px-3 py-2"
             >
-              <Scale size={14} color={colors.ink700} />
-              <Text className="font-poppins-medium text-xs text-ink-700">
+              <Scale size={ICON.sm} color={colors.ink700} />
+              <Text className="font-poppins-medium text-caption text-ink-700">
                 Dispute
               </Text>
             </Pressable>
@@ -196,13 +198,13 @@ export default function ConversationScreen() {
                     }`}
                   >
                     <Text
-                      className={`font-poppins text-sm ${isOwn ? "text-white" : "text-ink-900"}`}
+                      className={`font-poppins text-body ${isOwn ? "text-white" : "text-ink-900"}`}
                     >
                       {item.content}
                     </Text>
                   </View>
                   <Text
-                    className={`mt-1 font-poppins text-[10px] text-ink-300 ${
+                    className={`mt-1 font-poppins text-micro text-ink-300 ${
                       isOwn ? "text-right" : "text-left"
                     }`}
                   >
@@ -213,7 +215,7 @@ export default function ConversationScreen() {
             }}
             ListEmptyComponent={
               <View className="flex-1 items-center justify-center px-10">
-                <Text className="text-center font-poppins text-sm text-ink-500">
+                <Text className="text-center font-poppins text-body text-ink-500">
                   No messages yet. Say hello!
                 </Text>
               </View>
@@ -223,6 +225,9 @@ export default function ConversationScreen() {
 
         <View className="border-t border-brand-50 px-4 pt-3">
           <ChatSafetyNotice />
+          {listingId ? (
+            <ChatOfficePickupPrompt listingId={listingId} listingTitle={title ?? "this item"} />
+          ) : null}
         </View>
         <View className="flex-row items-end gap-2 px-4 py-3">
           <TextInput
@@ -230,7 +235,7 @@ export default function ConversationScreen() {
             onChangeText={setDraft}
             placeholder="Type a message"
             placeholderTextColor={colors.ink300}
-            className="max-h-28 flex-1 rounded-2xl border border-brand-100 bg-surface px-4 py-2.5 font-poppins text-sm text-ink-900"
+            className="max-h-28 flex-1 rounded-2xl border border-brand-100 bg-surface px-4 py-2.5 font-poppins text-body text-ink-900"
             multiline
           />
           <Pressable
@@ -242,7 +247,7 @@ export default function ConversationScreen() {
             {sending ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Send size={18} color="#FFFFFF" />
+              <Send size={ICON.md} color="#FFFFFF" />
             )}
           </Pressable>
         </View>

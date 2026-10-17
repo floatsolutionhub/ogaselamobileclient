@@ -11,6 +11,13 @@ import { AppState, AppStateStatus } from "react-native";
 import Toast from "react-native-toast-message";
 
 import { env } from "@/config/env";
+import {
+  clearPersistedLastActivity,
+  idleMs,
+  markActivity,
+  persistLastActivity,
+  readPersistedLastActivity,
+} from "@/lib/activityClock";
 import { ApiError, getAccessToken, setAccessToken, setUnauthorizedHandler } from "@/lib/apiClient";
 import * as tokenStorage from "@/lib/tokenStorage";
 import * as authService from "@/services/auth";
@@ -85,7 +92,6 @@ async function clearTokens(): Promise<void> {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const lastActivityRef = useRef<number>(Date.now());
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   const logout = useCallback(async (reason?: string) => {
@@ -101,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     await clearTokens();
+    await clearPersistedLastActivity();
     setUser(null);
     if (reason) {
       Toast.show({ type: "info", text1: "Signed out", text2: reason });
@@ -139,6 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!accessToken) return;
 
         setAccessToken(accessToken);
+
+        // The app was closed (or killed in the background) while signed in: if it sat unused past
+        // the auto-logout limit, end that session instead of quietly restoring it.
+        const lastActivity = await readPersistedLastActivity();
+        if (lastActivity !== null && Date.now() - lastActivity >= env.autoLogoutMinutes * 60_000) {
+          await logout("You were logged out after a period of inactivity.");
+          return;
+        }
+        markActivity();
+
         const me = await meService.getCurrentUser();
         setUser(me);
       } catch (error) {
@@ -151,12 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [logout]);
 
   const completeLogin = useCallback(async (): Promise<CurrentUser> => {
     const me = await meService.getCurrentUser();
     setUser(me);
-    lastActivityRef.current = Date.now();
+    markActivity();
     return me;
   }, []);
 
@@ -219,17 +236,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   }, []);
 
-  const registerActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
-  }, []);
+  const registerActivity = useCallback(() => markActivity(), []);
 
   useEffect(() => {
     const timeoutMs = env.autoLogoutMinutes * 60_000;
 
     const maybeLogout = () => {
       if (!user) return;
-      const elapsed = Date.now() - lastActivityRef.current;
-      if (elapsed >= timeoutMs) {
+      if (idleMs() >= timeoutMs) {
         logout("You were logged out after a period of inactivity.");
       }
     };
@@ -237,6 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (appState.current.match(/inactive|background/) && nextState === "active") {
         maybeLogout();
+      }
+      // Remember when they were last active, in case the OS kills the app while it's away.
+      if (user && nextState.match(/inactive|background/)) {
+        persistLastActivity();
       }
       appState.current = nextState;
     });
