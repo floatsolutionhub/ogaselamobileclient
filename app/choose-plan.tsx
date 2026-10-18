@@ -4,7 +4,9 @@ import {
   ChevronLeft,
   Clock,
   CreditCard,
-  Wallet as WalletIcon,
+  ImageOff,
+  // Wallet disabled for now - restore with the wallet payment option below.
+  // Wallet as WalletIcon,
   type LucideIcon,
 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
@@ -25,7 +27,7 @@ import { ApiError } from "@/lib/apiClient";
 import * as listingsService from "@/services/listings";
 import type { ListingCheckout, ListingPaymentMethod } from "@/services/listings";
 import { getPromotionPlans } from "@/services/promotionPlans";
-import * as walletService from "@/services/wallet";
+// import * as walletService from "@/services/wallet"; // Wallet disabled for now.
 import { colors } from "@/theme/colors";
 import type { Listing, PromotionPlan } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
@@ -57,8 +59,9 @@ function checkoutErrorMessage(error: unknown): { title: string; body: string } {
       return { title: "The free plan isn't available here", body: "Ads in this category need a paid plan." };
     case "Listing.FreePlanCapReached":
       return { title: "You've used all your free ads", body: "Choose a paid plan, or wait for one of your free ads to end." };
-    case "Payment.InsufficientBalance":
-      return { title: "Not enough in your wallet", body: "Pay by card instead, or top up your wallet." };
+    // Wallet disabled for now - only reachable when paying from the wallet.
+    // case "Payment.InsufficientBalance":
+    //   return { title: "Not enough in your wallet", body: "Pay by card instead, or top up your wallet." };
     default:
       return { title: "Couldn't complete checkout", body: error.message };
   }
@@ -77,21 +80,26 @@ export default function ChoosePlanScreen() {
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [plans, setPlans] = useState<PromotionPlan[]>([]);
-  const [balanceKobo, setBalanceKobo] = useState<number | null>(null);
+  // Wallet disabled for now: no balance is loaded or shown, and every paid plan goes through the card checkout.
+  // const [balanceKobo, setBalanceKobo] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [method, setMethod] = useState<ListingPaymentMethod>("Card");
+  // Wallet disabled for now - stand-in so the rest of the screen compiles unchanged.
+  const balanceKobo: number | null = null;
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
   /** A card payment the bank hasn't confirmed yet - checked again on focus and via "Check again". */
   const [pendingReference, setPendingReference] = useState<string | null>(null);
 
-  const loadWallet = useCallback(async () => {
-    try {
-      setBalanceKobo((await walletService.getWallet()).balanceKobo);
-    } catch {
-      setBalanceKobo(null);
-    }
-  }, []);
+  // Wallet disabled for now - restore the balance fetch with the wallet option.
+  // const loadWallet = useCallback(async () => {
+  //   try {
+  //     setBalanceKobo((await walletService.getWallet()).balanceKobo);
+  //   } catch {
+  //     setBalanceKobo(null);
+  //   }
+  // }, []);
+  const loadWallet = useCallback(() => {}, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -120,6 +128,9 @@ export default function ChoosePlanScreen() {
 
   const selected = useMemo(() => plans.find((p) => p.id === selectedId) ?? null, [plans, selectedId]);
   const isFree = selected?.price === 0;
+  const photoCount = listing?.mediaUrls.length ?? 0;
+  /** Photos the API will leave off when this ad is submitted on the selected plan (it keeps the first ones). */
+  const photosDropped = selected && selected.photoLimit > 0 ? Math.max(0, photoCount - selected.photoLimit) : 0;
   const walletCovers = !!selected && balanceKobo !== null && balanceKobo >= selected.price;
   const effectiveMethod: ListingPaymentMethod = method === "Wallet" && !walletCovers ? "Card" : method;
 
@@ -222,7 +233,8 @@ export default function ChoosePlanScreen() {
     ? "Choose a plan"
     : isFree
       ? "Submit for review - free"
-      : `Pay ${fromKobo(selected.price)}${effectiveMethod === "Wallet" ? " from wallet" : ""}`;
+      : `Pay ${fromKobo(selected.price)}`;
+  // Wallet disabled for now: was `Pay ${fromKobo(selected.price)}${effectiveMethod === "Wallet" ? " from wallet" : ""}`
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top", "bottom"]}>
@@ -317,6 +329,15 @@ export default function ChoosePlanScreen() {
                     <Text className="font-poppins text-caption text-ink-500"> · {plan.durationDays} days</Text>
                   </Text>
 
+                  {plan.photoLimit > 0 && photoCount > plan.photoLimit ? (
+                    <View className="mt-3 flex-row items-start gap-2 rounded-xl bg-gold-50 px-3 py-2">
+                      <ImageOff size={ICON.sm} color={colors.gold700} style={{ marginTop: 2 }} />
+                      <Text className="flex-1 font-poppins text-caption text-gold-700">
+                        Shows {plan.photoLimit} of your {photoCount} photos - we&apos;ll keep your first {plan.photoLimit}.
+                      </Text>
+                    </View>
+                  ) : null}
+
                   {plan.features.length > 0 ? (
                     <View className="mt-3 gap-1.5">
                       {plan.features.map((feature) => (
@@ -345,6 +366,7 @@ export default function ChoosePlanScreen() {
                   selected={effectiveMethod === "Card"}
                   onPress={() => setMethod("Card")}
                 />
+                {/* Wallet disabled for now - restore with WalletIcon, walletService and balanceKobo above.
                 <MethodOption
                   icon={WalletIcon}
                   title="Wallet"
@@ -359,12 +381,25 @@ export default function ChoosePlanScreen() {
                   disabled={!walletCovers}
                   onPress={() => setMethod("Wallet")}
                 />
+                */}
               </>
+            ) : null}
+
+            {photosDropped > 0 && selected ? (
+              <View className="mt-2 flex-row gap-3 rounded-2xl border border-gold-50 bg-gold-50 p-4">
+                <ImageOff size={ICON.md} color={colors.gold700} />
+                <Text className="flex-1 font-poppins text-caption text-ink-700">
+                  The {selected.name} plan includes up to {selected.photoLimit} photos, so your last {photosDropped}{" "}
+                  {photosDropped === 1 ? "photo" : "photos"} will be left off when your ad is submitted. Choose a bigger
+                  plan to keep them all, or edit your draft and remove the ones you can do without.
+                </Text>
+              </View>
             ) : null}
 
             <Text className="mt-2 font-poppins text-caption text-ink-500">
               Once {isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review
-              before buyers can see it. If it isn&apos;t approved, a paid plan is refunded to your wallet.
+              before buyers can see it.
+              {/* Wallet disabled for now: " If it isn't approved, a paid plan is refunded to your wallet." */}
             </Text>
           </ScrollView>
 

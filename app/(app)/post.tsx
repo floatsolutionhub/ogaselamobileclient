@@ -35,6 +35,7 @@ import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import { ApiError } from "@/lib/apiClient";
 import * as aiService from "@/services/ai";
 import * as listingsService from "@/services/listings";
+import { getPromotionPlans } from "@/services/promotionPlans";
 import { colors } from "@/theme/colors";
 import { ListingCondition } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
@@ -58,8 +59,12 @@ const LINK_FIELD: Record<SocialPlatform, "youTubeUrl" | "tikTokUrl" | "instagram
   facebook: "facebookUrl",
 };
 
-/** The API's limit (Listing.MaxPhotoCount). */
-const MAX_PHOTOS = 5;
+/**
+ * Used until the plans load (or if they can't): a seller can add as many photos as the most
+ * generous active plan allows, and the plan they pick decides how many are kept - the API drops the
+ * rest from the end when the ad is submitted (ListingPublishService.SubmitAsync).
+ */
+const FALLBACK_MAX_PHOTOS = 5;
 
 const STEPS = [
   { key: "details", fields: ["title", "categoryId", "condition"] },
@@ -135,6 +140,9 @@ export default function PostScreen() {
   const [values, setValues] = useState<Values>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  /** Photo limits across the active plans: the most a seller can add, and the fewest any plan keeps. */
+  const [photoLimits, setPhotoLimits] = useState({ max: FALLBACK_MAX_PHOTOS, min: FALLBACK_MAX_PHOTOS });
+  const MAX_PHOTOS = photoLimits.max;
   const [listingId, setListingId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // A draft opened from My Ads that hasn't loaded into the form yet.
@@ -145,6 +153,23 @@ export default function PostScreen() {
   const [aiNote, setAiNote] = useState<string | null>(null);
   // What each pop-up was last offered for - it only pops up again if those inputs change.
   const askedFor = useRef<{ description?: string; price?: string }>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    getPromotionPlans()
+      .then((plans) => {
+        const limits = plans.filter((p) => p.isActive && p.photoLimit > 0).map((p) => p.photoLimit);
+        if (!cancelled && limits.length > 0) {
+          setPhotoLimits({ max: Math.max(...limits), min: Math.min(...limits) });
+        }
+      })
+      .catch(() => {
+        // Keep the fallback - the API still trims to the chosen plan either way.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const current = STEPS[step];
   const category = tree.find((c) => c.id === values.categoryId);
@@ -619,6 +644,9 @@ export default function PostScreen() {
           <>
             <Text className="mb-4 font-poppins text-caption text-ink-500">
               Up to {MAX_PHOTOS} photos. The first one is your cover - and helps our AI write your description.
+              {MAX_PHOTOS > photoLimits.min
+                ? ` Each plan shows a set number of photos (from ${photoLimits.min}); if you add more than your plan allows, we keep the first ones and leave the rest off.`
+                : ""}
             </Text>
             <View className="flex-row flex-wrap gap-3">
               {photos.map((photo, index) => (
