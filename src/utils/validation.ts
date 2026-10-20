@@ -106,6 +106,8 @@ export const createListingSchema = Yup.object({
   categoryId: Yup.string().required("Choose a category"),
   // Optional: an ad can sit directly in its category; picking a subcategory just files it more precisely.
   subcategoryId: Yup.string().notRequired(),
+  state: Yup.string().required("Choose the state the item is in"),
+  city: Yup.string().required("Choose the city the item is in"),
   condition: Yup.string()
     .oneOf(["New", "Used"], "Choose the item's condition")
     .required("Choose the item's condition"),

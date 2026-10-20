@@ -1,35 +1,13 @@
 import { router } from "expo-router";
 import { MapPin } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Linking, Platform, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useLocation } from "@/context/LocationContext";
-import { requestAndResolveLocation, type LocationFailure } from "@/services/locationService";
+import { LOCATION_FAILURE_MESSAGE, requestAndResolveLocation, type LocationFailure } from "@/services/locationService";
 import { colors } from "@/theme/colors";
-
-const FAILURE_MESSAGE: Record<LocationFailure, { title: string; body: string }> = {
-  denied: {
-    title: "Location access not granted",
-    body: "Tap Allow when asked, or choose your area manually.",
-  },
-  blocked: {
-    title: "Location access is turned off for Ogasela",
-    body: "Open Settings, allow Location for Ogasela, then come back and try again.",
-  },
-  servicesOff: {
-    title: "Your phone's location is switched off",
-    body:
-      Platform.OS === "ios"
-        ? "Turn on Settings > Privacy & Security > Location Services, then try again."
-        : "Turn on Location from your quick settings (swipe down from the top), then try again.",
-  },
-  unavailable: {
-    title: "Couldn't find your location",
-    body: "We couldn't get a signal. Move near a window or try again, or choose your area manually.",
-  },
-};
 
 export default function LocationPermissionSheet() {
   const { setLocation, markOnboardingComplete } = useLocation();
@@ -53,7 +31,7 @@ export default function LocationPermissionSheet() {
       const result = await requestAndResolveLocation();
       if (!result.ok) {
         setFailure(result.reason);
-        const message = FAILURE_MESSAGE[result.reason];
+        const message = LOCATION_FAILURE_MESSAGE[result.reason];
         Toast.show({ type: "info", text1: message.title, text2: message.body });
         return;
       }
@@ -96,7 +74,7 @@ export default function LocationPermissionSheet() {
       <View className="mt-8">
         {failure ? (
           <Text className="mb-3 text-center font-poppins text-caption leading-5 text-ink-500">
-            {FAILURE_MESSAGE[failure].body}
+            {LOCATION_FAILURE_MESSAGE[failure].body}
           </Text>
         ) : null}
         <PrimaryButton

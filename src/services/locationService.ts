@@ -58,6 +58,31 @@ export type LocationFailure =
 
 export type LocationResult = { ok: true; location: ResolvedLocation } | { ok: false; reason: LocationFailure };
 
+export type CoordinatesResult = { ok: true; coords: Coordinates } | { ok: false; reason: LocationFailure };
+
+/** What to tell the user for each failure. */
+export const LOCATION_FAILURE_MESSAGE: Record<LocationFailure, { title: string; body: string }> = {
+  denied: {
+    title: "Location access not granted",
+    body: "Tap Allow when asked, or choose your area manually.",
+  },
+  blocked: {
+    title: "Location access is turned off for Ogasela",
+    body: "Open Settings, allow Location for Ogasela, then come back and try again.",
+  },
+  servicesOff: {
+    title: "Your phone's location is switched off",
+    body:
+      Platform.OS === "ios"
+        ? "Turn on Settings > Privacy & Security > Location Services, then try again."
+        : "Turn on Location from your quick settings (swipe down from the top), then try again.",
+  },
+  unavailable: {
+    title: "Couldn't find your location",
+    body: "We couldn't get a signal. Move near a window or try again, or choose your area manually.",
+  },
+};
+
 /** How long to wait for a fresh position before falling back to the last known one. */
 const POSITION_TIMEOUT_MS = 15_000;
 /** A last known position up to this old is still good enough to pick the user's area. */
@@ -116,10 +141,9 @@ async function currentPosition(): Promise<Location.LocationObject | null> {
 
 /**
  * Asks for foreground location permission (only if the OS will still show the prompt), makes sure
- * location is switched on (offering Android's turn-on dialog), gets a position, and best-effort
- * matches it to a state/city in our Nigeria location list.
+ * location is switched on (offering Android's turn-on dialog), and gets a position.
  */
-export async function requestAndResolveLocation(): Promise<LocationResult> {
+export async function requestDeviceCoordinates(): Promise<CoordinatesResult> {
   const permissionFailure = await ensurePermission();
   if (permissionFailure) return { ok: false, reason: permissionFailure };
 
@@ -128,10 +152,27 @@ export async function requestAndResolveLocation(): Promise<LocationResult> {
   const position = await currentPosition();
   if (!position) return { ok: false, reason: "unavailable" };
 
-  const coords: Coordinates = {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-  };
+  return { ok: true, coords: { latitude: position.coords.latitude, longitude: position.coords.longitude } };
+}
+
+/** The state the phone's own geocoder puts a position in (e.g. "Lagos"), or null if it can't say. */
+export async function deviceRegion(coords: Coordinates): Promise<string | null> {
+  try {
+    const [address] = await Location.reverseGeocodeAsync(coords);
+    return address?.region ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The device's position (see requestDeviceCoordinates), best-effort matched to a state/city in our
+ * Nigeria location list.
+ */
+export async function requestAndResolveLocation(): Promise<LocationResult> {
+  const device = await requestDeviceCoordinates();
+  if (!device.ok) return device;
+  const { coords } = device;
 
   let address: Location.LocationGeocodedAddress | undefined;
   try {

@@ -4,8 +4,10 @@ import {
   AlertCircle,
   Camera,
   Check,
+  ChevronDown,
   ChevronLeft,
   Link as LinkIcon,
+  LocateFixed,
   Plus,
   Sparkles,
   Tag,
@@ -26,6 +28,7 @@ import Toast from "react-native-toast-message";
 import { Modal } from "@/components/ActivityModal";
 import { FormField } from "@/components/FormField";
 import { GradientScreen } from "@/components/GradientScreen";
+import { OptionSheet } from "@/components/OptionSheet";
 import { PostStepProgress } from "@/components/PostStepProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { VerificationBadge } from "@/components/VerificationBadge";
@@ -35,10 +38,12 @@ import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { useVerificationOverview } from "@/hooks/useVerificationOverview";
 import { ApiError } from "@/lib/apiClient";
 import * as aiService from "@/services/ai";
+import * as geoService from "@/services/geo";
 import * as listingsService from "@/services/listings";
+import { deviceRegion, LOCATION_FAILURE_MESSAGE, requestDeviceCoordinates } from "@/services/locationService";
 import { getPromotionPlans } from "@/services/promotionPlans";
 import { colors } from "@/theme/colors";
-import { ListingCondition } from "@/types/api";
+import { ListingCondition, type NigeriaCity, type NigeriaState } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
 import { editMode, type EditMode } from "@/utils/listingLifecycle";
 import { prepareListingPhoto } from "@/utils/photos";
@@ -69,7 +74,7 @@ const LINK_FIELD: Record<SocialPlatform, "youTubeUrl" | "tikTokUrl" | "instagram
 const FALLBACK_MAX_PHOTOS = 5;
 
 const STEPS = [
-  { key: "details", fields: ["title", "categoryId", "condition"] },
+  { key: "details", fields: ["title", "categoryId", "state", "city", "condition"] },
   { key: "photos", fields: [] },
   { key: "copy", fields: ["description", "price"] },
 ] as const satisfies readonly { key: string; fields: readonly (keyof Values)[] }[];
@@ -78,6 +83,9 @@ type Values = {
   title: string;
   categoryId: string;
   subcategoryId: string;
+  /** Where the item is - saved on the ad as "City, State". */
+  state: string;
+  city: string;
   condition: ListingCondition | "";
   description: string;
   price: string;
@@ -93,6 +101,8 @@ const EMPTY: Values = {
   title: "",
   categoryId: "",
   subcategoryId: "",
+  state: "",
+  city: "",
   condition: "",
   description: "",
   price: "",
@@ -112,6 +122,12 @@ type PickedPhoto = {
   /** Set once uploaded, so it's never uploaded twice. Photos of a resumed draft start with it set. */
   url?: string;
 };
+
+/** An ad's saved place, "City, State", back into its parts. */
+function splitPlace(location: string | null): { city: string; state: string } {
+  const at = location?.lastIndexOf(", ") ?? -1;
+  return at > 0 ? { city: location!.slice(0, at), state: location!.slice(at + 2) } : { city: "", state: "" };
+}
 
 /** What the AI pop-up is offering. */
 type Suggestion =
@@ -136,7 +152,9 @@ export default function PostScreen() {
   useProtectedRoute("/(app)/post");
   const router = useRouter();
   const params = useLocalSearchParams<{ listingId?: string }>();
-  const { locationLabel, isNationwide } = useLocation();
+  const { locationLabel, isNationwide, selectedState, selectedCity } = useLocation();
+  /** A fresh ad starts in the area the seller is browsing (they can change it). */
+  const blank = (): Values => (isNationwide ? EMPTY : { ...EMPTY, state: selectedState, city: selectedCity });
   const { tree } = useCategoryTree();
 
   // Only verified accounts can sell: until then the form is shown but Continue stays disabled.
@@ -144,7 +162,7 @@ export default function PostScreen() {
   const canSell = verification?.personal.status === "Verified";
 
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState<Values>(EMPTY);
+  const [values, setValues] = useState<Values>(blank);
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   /** Photo limits across the active plans: the most a seller can add, and the fewest any plan keeps. */
@@ -153,7 +171,7 @@ export default function PostScreen() {
   const [listingId, setListingId] = useState<string | null>(null);
   /** What kind of edit this is - "new" for a fresh ad or an ordinary draft. */
   const [mode, setMode] = useState<EditMode>("new");
-  /** An existing ad's own plan, place and moderator note (its location isn't re-read from the picker). */
+  /** An existing ad's own plan, place and moderator note. */
   const [existing, setExisting] = useState<{
     planId: string | null;
     location: string | null;
@@ -172,8 +190,19 @@ export default function PostScreen() {
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
+  /** Which picker sheet is open on the details step. */
+  const [sheet, setSheet] = useState<"category" | "subcategory" | "state" | "city" | null>(null);
+  const [states, setStates] = useState<NigeriaState[]>([]);
+  /** The cities last loaded, and which state they belong to. */
+  const [loadedCities, setLoadedCities] = useState<{ stateId: string; list: NigeriaCity[] } | null>(null);
+  const [locating, setLocating] = useState(false);
+  /** The "leave this ad?" prompt, shown when going back past the first step. */
+  const [confirmLeave, setConfirmLeave] = useState(false);
   // What each pop-up was last offered for - it only pops up again if those inputs change.
   const askedFor = useRef<{ description?: string; price?: string }>({});
+  const scrollRef = useRef<ScrollView>(null);
+  /** Set when "Used" is tapped, so the receipt box scrolls into view once it has laid out. */
+  const revealReceipt = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,7 +232,7 @@ export default function PostScreen() {
   };
 
   const reset = () => {
-    setValues(EMPTY);
+    setValues(blank());
     setPhotos([]);
     setErrors({});
     setStep(0);
@@ -247,6 +276,7 @@ export default function PostScreen() {
           title: ad.title,
           categoryId: parent?.id ?? ad.categoryId,
           subcategoryId: parent && parent.id !== ad.categoryId ? ad.categoryId : "",
+          ...splitPlace(ad.location),
           condition: ad.condition,
           description: ad.description,
           price: ad.price != null ? String(ad.price) : "",
@@ -260,7 +290,7 @@ export default function PostScreen() {
         setListingId(ad.id);
         setErrors({});
         // Pick up at the first step that still needs something.
-        setStep(!ad.title || !ad.categoryId ? 0 : ad.mediaUrls.length === 0 ? 1 : 2);
+        setStep(!ad.title || !ad.categoryId || !ad.location ? 0 : ad.mediaUrls.length === 0 ? 1 : 2);
         askedFor.current = {};
       })
       .catch(() => {
@@ -274,6 +304,80 @@ export default function PostScreen() {
     // Only when a different draft is opened, or once categories arrive to map it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.listingId, tree.length]);
+
+  // ---- Place (state & city) ----
+
+  useEffect(() => {
+    let active = true;
+    geoService
+      .getStates()
+      .then((data) => active && setStates(data))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const placeStateId = states.find((s) => s.name === values.state)?.id;
+  useEffect(() => {
+    if (!placeStateId) return;
+    let active = true;
+    geoService
+      .getCitiesByState(placeStateId)
+      .catch(() => [] as NigeriaCity[])
+      .then((list) => active && setLoadedCities({ stateId: placeStateId, list }));
+    return () => {
+      active = false;
+    };
+  }, [placeStateId]);
+  const citiesLoaded = !!placeStateId && loadedCities?.stateId === placeStateId;
+  const cities = citiesLoaded ? loadedCities.list : [];
+  const placeCityId = cities.find((c) => c.name === values.city)?.id ?? "";
+
+  /**
+   * The ad's place and coordinates. The coordinates are the city's, never the device's - an ad
+   * shows how far away it is without giving away where the seller lives.
+   */
+  const placeInput = (v: Values) => {
+    if (!v.state || !v.city) return { location: null, latitude: null, longitude: null };
+    const location = `${v.city}, ${v.state}`;
+    const city = cities.find((c) => c.name === v.city);
+    if (city?.latitude != null && city.longitude != null) {
+      return { location, latitude: city.latitude, longitude: city.longitude };
+    }
+    // The cities haven't loaded (or have no coordinates) - an unchanged place keeps its own.
+    if (existing?.location === location) return { location, latitude: existing.latitude, longitude: existing.longitude };
+    return { location, latitude: null, longitude: null };
+  };
+
+  /** Fills in state and city from the city nearest the device. */
+  const locateMe = async () => {
+    setLocating(true);
+    try {
+      const device = await requestDeviceCoordinates();
+      if (!device.ok) {
+        const message = LOCATION_FAILURE_MESSAGE[device.reason];
+        Toast.show({ type: "info", text1: message.title, text2: message.body });
+        return;
+      }
+      const region = await deviceRegion(device.coords);
+      const nearest = await geoService.getNearestCity(device.coords.latitude, device.coords.longitude, region);
+      setValues((prev) => ({ ...prev, state: nearest.state.name, city: nearest.city.name }));
+      setErrors((prev) => ({ ...prev, state: undefined, city: undefined }));
+      Toast.show({ type: "success", text1: "Location set", text2: `${nearest.city.name}, ${nearest.state.name}` });
+    } catch (error) {
+      Toast.show({
+        type: "info",
+        text1: "Couldn't find your city",
+        text2:
+          error instanceof ApiError && error.code === "Geo.NoCityNearby"
+            ? error.message
+            : "Choose your state and city instead.",
+      });
+    } finally {
+      setLocating(false);
+    }
+  };
 
   // ---- Draft saving ----
 
@@ -310,10 +414,7 @@ export default function PostScreen() {
       condition: (v.condition || "Used") as ListingCondition,
       mediaUrls: list.filter((p) => p.url).map((p) => p.url!),
       promotionPlanId: null,
-      // An existing ad keeps its place. "All of Nigeria" isn't a place - save the ad without a location instead.
-      ...(existing
-        ? { location: existing.location, latitude: existing.latitude, longitude: existing.longitude }
-        : { location: isNationwide ? null : locationLabel, latitude: null, longitude: null }),
+      ...placeInput(v),
       hasOriginalReceipt: v.condition === "Used" ? v.hasReceipt : null,
       // A half-typed link is left out rather than failing the whole draft save; Continue flags it.
       ...Object.fromEntries(
@@ -560,11 +661,41 @@ export default function PostScreen() {
     if (step > 0) setStep(step - 1);
   };
 
+  /**
+   * Leaves for good: the form starts fresh next time. Unlike switching tabs (which keeps the form
+   * and saves it as a draft), nothing more is saved - what was saved at the last Continue stays.
+   */
+  const leave = () => {
+    setConfirmLeave(false);
+    handedOff.current = true;
+    reset();
+    router.setParams({ listingId: undefined });
+    if (router.canGoBack()) router.back();
+    else router.replace("/(app)/home");
+  };
+
+  // From step 2 on there's real work to lose, so ask first.
+  const goBack = () => (step > 0 ? setConfirmLeave(true) : leave());
+
+  const saveAndLeave = async () => {
+    setBusy("Saving your draft...");
+    try {
+      const list = await uploadPhotos(photos);
+      await saveDraft(values, list, listingId);
+      Toast.show({ type: "success", text1: "Saved to your drafts", text2: "Finish it any time from My Ads → Drafts." });
+      leave();
+    } catch (error) {
+      showError("Couldn't save your draft", error);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   // ---- Render ----
 
   if (resuming) {
     return (
-      <GradientScreen scroll={false}>
+      <GradientScreen scroll={false} edges={["top", "left", "right"]}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={colors.brand600} />
         </View>
@@ -573,11 +704,23 @@ export default function PostScreen() {
   }
 
   return (
-    <GradientScreen scroll={false}>
+    <GradientScreen scroll={false} edges={["top", "left", "right"]}>
       <View className="px-6 pt-6">
-        <Text className="font-poppins-bold text-display text-ink-900">
-          {mode === "renew" ? "Renew your ad" : listingId ? "Edit your ad" : "Post an ad"}
-        </Text>
+        <View className="flex-row items-center gap-3">
+          <Pressable
+            onPress={goBack}
+            disabled={!!busy}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            className="h-10 w-10 items-center justify-center rounded-full border border-brand-100 bg-white"
+          >
+            <ChevronLeft size={ICON.md} color={colors.ink700} />
+          </Pressable>
+          <Text className="flex-1 font-poppins-bold text-display text-ink-900">
+            {mode === "renew" ? "Renew your ad" : listingId ? "Edit your ad" : "Post an ad"}
+          </Text>
+        </View>
         <Text className="mt-1 font-poppins text-body text-ink-500">
           {mode === "live"
             ? "Make your changes, then submit them for review."
@@ -595,6 +738,7 @@ export default function PostScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         className="px-6 pt-5"
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
@@ -646,41 +790,66 @@ export default function PostScreen() {
             />
 
             <Text className={LABEL}>Category</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {tree.map((c) => (
-                <Chip
-                  key={c.id}
-                  label={c.name}
-                  selected={c.id === values.categoryId}
-                  onPress={() => {
-                    // One update, so the subcategory is cleared together with the category change.
-                    setValues((prev) => ({ ...prev, categoryId: c.id, subcategoryId: "" }));
-                    setErrors((prev) => ({ ...prev, categoryId: undefined }));
-                  }}
-                />
-              ))}
-            </View>
+            <SelectButton
+              label={category?.name ?? "Select Category"}
+              placeholder={!category}
+              error={!!errors.categoryId}
+              onPress={() => setSheet("category")}
+            />
             {errors.categoryId ? (
               <Text className="mt-2 font-poppins text-caption text-danger">{errors.categoryId}</Text>
             ) : null}
 
-            {category && category.children.length > 0 ? (
-              <>
-                <Text className={`mt-5 ${LABEL}`}>
-                  Sub Category{" "}
-                  <Text className="font-poppins text-body text-ink-500">(optional)</Text>
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {category.children.map((c) => (
-                    <Chip
-                      key={c.id}
-                      label={c.name}
-                      selected={c.id === values.subcategoryId}
-                      onPress={() => set("subcategoryId", c.id === values.subcategoryId ? "" : c.id)}
-                    />
-                  ))}
-                </View>
-              </>
+            <Text className={`mt-5 ${LABEL}`}>
+              Sub Category <Text className="font-poppins text-body text-ink-500">(optional)</Text>
+            </Text>
+            <SelectButton
+              label={
+                subcategory?.name ??
+                (category && category.children.length === 0 ? "No sub categories" : "Select Sub category")
+              }
+              placeholder={!subcategory}
+              disabled={!category || category.children.length === 0}
+              onPress={() => setSheet("subcategory")}
+            />
+
+            <View className="mb-2 mt-5 flex-row items-center justify-between">
+              <Text className="font-poppins-semibold text-subtitle text-ink-900">Location</Text>
+              <Pressable
+                onPress={locateMe}
+                disabled={locating}
+                hitSlop={8}
+                accessibilityRole="button"
+                className="flex-row items-center gap-1 rounded-full bg-brand-50 px-3 py-1.5"
+                style={{ opacity: locating ? 0.6 : 1 }}
+              >
+                {locating ? (
+                  <ActivityIndicator size="small" color={colors.brand600} />
+                ) : (
+                  <LocateFixed size={ICON.sm} color={colors.brand600} />
+                )}
+                <Text className="font-poppins-semibold text-caption text-brand-700">Use my current location</Text>
+              </Pressable>
+            </View>
+            <SelectButton
+              label={values.state || "Select State"}
+              placeholder={!values.state}
+              error={!!errors.state}
+              onPress={() => setSheet("state")}
+            />
+            {errors.state ? (
+              <Text className="mt-2 font-poppins text-caption text-danger">{errors.state}</Text>
+            ) : null}
+            <View className="mt-3" />
+            <SelectButton
+              label={values.city || "Select City"}
+              placeholder={!values.city}
+              disabled={!values.state}
+              error={!!errors.city}
+              onPress={() => setSheet("city")}
+            />
+            {errors.city ? (
+              <Text className="mt-2 font-poppins text-caption text-danger">{errors.city}</Text>
             ) : null}
 
             <Text className={`mt-5 ${LABEL}`}>Condition</Text>
@@ -690,7 +859,10 @@ export default function PostScreen() {
                 return (
                   <Pressable
                     key={option}
-                    onPress={() => set("condition", option)}
+                    onPress={() => {
+                      if (option === "Used" && values.condition !== "Used") revealReceipt.current = true;
+                      set("condition", option);
+                    }}
                     className={`flex-1 items-center rounded-2xl border px-4 py-3.5 ${
                       active ? "border-brand-600 bg-brand-600" : "border-brand-100 bg-surface"
                     }`}
@@ -709,6 +881,12 @@ export default function PostScreen() {
             {values.condition === "Used" ? (
               <Pressable
                 onPress={() => set("hasReceipt", !values.hasReceipt)}
+                onLayout={() => {
+                  // It's the last thing on this step, so the end of the list shows all of it.
+                  if (!revealReceipt.current) return;
+                  revealReceipt.current = false;
+                  scrollRef.current?.scrollToEnd({ animated: true });
+                }}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: values.hasReceipt }}
                 className="mt-4 flex-row items-center gap-3 rounded-2xl border border-brand-100 bg-surface px-4 py-3.5"
@@ -852,7 +1030,7 @@ export default function PostScreen() {
         ) : null}
       </ScrollView>
 
-      <View className="flex-row items-center gap-3 px-6 pb-4 pt-2">
+      <View className="flex-row items-center gap-3 px-6 pb-2 pt-2">
         {step > 0 ? (
           <Pressable
             onPress={back}
@@ -885,6 +1063,100 @@ export default function PostScreen() {
       {busy ? (
         <Text className="pb-3 text-center font-poppins text-caption text-ink-500">{busy}</Text>
       ) : null}
+
+      <OptionSheet
+        visible={sheet === "category"}
+        title="Select Category"
+        options={tree}
+        selectedId={values.categoryId}
+        onSelect={(id) => {
+          if (id === values.categoryId) return;
+          // One update, so the subcategory is cleared together with the category change.
+          setValues((prev) => ({ ...prev, categoryId: id, subcategoryId: "" }));
+          setErrors((prev) => ({ ...prev, categoryId: undefined }));
+        }}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        visible={sheet === "subcategory"}
+        title="Select Sub category"
+        options={category?.children ?? []}
+        selectedId={values.subcategoryId}
+        clearLabel="None"
+        onSelect={(id) => set("subcategoryId", id)}
+        onClose={() => setSheet(null)}
+      />
+
+      <OptionSheet
+        visible={sheet === "state"}
+        title="Select State"
+        art="place"
+        searchPlaceholder="Search state"
+        options={states}
+        loading={states.length === 0}
+        selectedId={placeStateId ?? ""}
+        onSelect={(id) => {
+          const name = states.find((s) => s.id === id)?.name ?? "";
+          if (name === values.state) return;
+          // One update, so the city is cleared together with the state change.
+          setValues((prev) => ({ ...prev, state: name, city: "" }));
+          setErrors((prev) => ({ ...prev, state: undefined }));
+        }}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        visible={sheet === "city"}
+        title="Select City"
+        art="place"
+        searchPlaceholder="Search city"
+        options={cities}
+        loading={!citiesLoaded}
+        selectedId={placeCityId}
+        onSelect={(id) => set("city", cities.find((c) => c.id === id)?.name ?? "")}
+        onClose={() => setSheet(null)}
+      />
+
+      <Modal visible={confirmLeave} transparent animationType="fade" onRequestClose={() => setConfirmLeave(false)}>
+        <View className="flex-1 items-center justify-center bg-ink-900/50 px-6">
+          <View className="w-full rounded-3xl bg-white p-6">
+            <View className="mb-3 flex-row items-center gap-2">
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-gold-50">
+                <AlertCircle size={ICON.md} color={colors.gold700} />
+              </View>
+              <Text className="flex-1 font-poppins-semibold text-title text-ink-900">
+                {mode === "live" ? "Discard your changes?" : "Leave this ad?"}
+              </Text>
+            </View>
+            <Text className="font-poppins text-body leading-5 text-ink-700">
+              {mode === "live"
+                ? "Going back clears everything you've changed - your live ad stays as it is. To keep the changes, stay and submit them for review."
+                : "Going back clears all the fields on this ad. To continue it later, tap Save as draft - it'll be waiting in My Ads → Drafts."}
+            </Text>
+
+            <View className="mt-5 gap-3">
+              {mode !== "live" ? (
+                <PrimaryButton label="Save as draft" loading={!!busy} onPress={saveAndLeave} />
+              ) : null}
+              <Pressable
+                onPress={leave}
+                disabled={!!busy}
+                className="items-center rounded-2xl border border-danger/30 py-3.5"
+              >
+                <Text className="font-poppins-semibold text-body text-danger">
+                  {mode === "live" ? "Discard changes & go back" : "Clear & go back"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setConfirmLeave(false)}
+                disabled={!!busy}
+                className="items-center rounded-2xl border border-brand-100 py-3.5"
+              >
+                <Text className="font-poppins-semibold text-body text-ink-700">Keep editing</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={!!suggestion} transparent animationType="fade" onRequestClose={() => closeSuggestion(false)}>
         <View className="flex-1 items-center justify-center bg-ink-900/50 px-6">
@@ -944,15 +1216,38 @@ export default function PostScreen() {
   );
 }
 
-function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+/** A field-like button that opens a picker sheet. */
+function SelectButton({
+  label,
+  placeholder,
+  disabled,
+  error,
+  onPress,
+}: {
+  label: string;
+  placeholder: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      className={`rounded-full border px-4 py-2.5 ${selected ? "border-brand-600 bg-brand-600" : "border-brand-100 bg-white"}`}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      className={`flex-row items-center justify-between rounded-2xl border px-4 py-3.5 ${
+        error ? "border-danger" : "border-brand-100"
+      } ${disabled ? "bg-ink-50" : "bg-surface"}`}
+      style={{ opacity: disabled ? 0.6 : 1 }}
     >
-      <Text className={`font-poppins-medium text-body ${selected ? "text-white" : "text-ink-700"}`}>{label}</Text>
+      <Text
+        numberOfLines={1}
+        className={`flex-1 font-poppins text-subtitle ${placeholder ? "text-ink-300" : "text-ink-900"}`}
+      >
+        {label}
+      </Text>
+      <ChevronDown size={ICON.md} color={colors.ink500} />
     </Pressable>
   );
 }

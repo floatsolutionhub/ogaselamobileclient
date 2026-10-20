@@ -360,7 +360,16 @@ export interface NigeriaCity {
   id: string;
   stateId: string;
   name: string;
+  /** Null until staff set it in the Control Portal. */
+  latitude: number | null;
+  longitude: number | null;
   createdAt: string;
+}
+
+export interface NearestCity {
+  state: NigeriaState;
+  city: NigeriaCity;
+  distanceKm: number;
 }
 
 // AdIntegrations (adIntegrations.ts) - Ogasela.Api/Controllers/AdIntegrations/

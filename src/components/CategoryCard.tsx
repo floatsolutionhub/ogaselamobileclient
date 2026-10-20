@@ -8,6 +8,7 @@ import {
   Tag,
   Wrench,
   type LucideIcon,
+  type LucideProps,
 } from "lucide-react-native";
 import { useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
@@ -32,8 +33,13 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   services: Wrench,
 };
 
+/** The built-in icon for a category without an image. */
+export function CategoryIcon({ name, ...props }: LucideProps & { name: string }) {
+  const Icon = CATEGORY_ICONS[name.toLowerCase()] ?? Tag;
+  return <Icon {...props} />;
+}
+
 export function CategoryCard({ category, width, onPress }: CategoryCardProps) {
-  const Icon = CATEGORY_ICONS[category.name.toLowerCase()] ?? Tag;
   const [pressed, setPressed] = useState(false);
   const artSize = Math.round(width * 0.5);
 
@@ -85,7 +91,8 @@ export function CategoryCard({ category, width, onPress }: CategoryCardProps) {
               resizeMode="cover"
             />
           ) : (
-            <Icon
+            <CategoryIcon
+              name={category.name}
               size={Math.round(artSize * 0.6)}
               color={colors.ink700}
               strokeWidth={1.75}
