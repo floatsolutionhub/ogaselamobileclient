@@ -78,7 +78,9 @@ export type ListingStatus =
   | "Expired"
   | "Paused"
   | "Sold"
-  | "PendingReview";
+  | "PendingReview"
+  /** Removed by its seller - the API never returns these, but the enum has it. */
+  | "Deleted";
 
 export interface Listing {
   id: string;
@@ -126,6 +128,8 @@ export interface ListingDetail extends Listing {
     verificationStatus: string;
     memberSince: string;
     isBusinessVerified?: boolean;
+    /** The signed-in viewer has blocked this seller. */
+    isBlockedByMe?: boolean;
   };
 }
 
@@ -169,6 +173,17 @@ export interface Conversation {
   otherParticipantId: string;
   createdAt: string;
   lastMessageAt: string | null;
+  /** The signed-in user has blocked the other participant - the chat is closed until they unblock. */
+  isBlockedByMe: boolean;
+  /** The other person deleted their account - the chat stays readable for reference, but closed for good. */
+  isOtherParticipantDeleted: boolean;
+}
+
+/** displayName is the business name for sellers, otherwise their own name (null if never set). */
+export interface BlockedUser {
+  userId: string;
+  displayName: string | null;
+  blockedAt: string;
 }
 
 export interface Message {

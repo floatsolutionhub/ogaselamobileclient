@@ -105,6 +105,26 @@ export function cancelCheckout(id: string, reference: string): Promise<ListingCh
   return api.post<ListingCheckout>(`/listings/${id}/checkout/${encodeURIComponent(reference)}/cancel`);
 }
 
+/**
+ * Moves an ad whose plan is running (live, or an edit in review / sent back) onto a bigger plan, for
+ * the new plan's full price. Same outcomes as checkout; card payments confirm/cancel through the
+ * checkout endpoints. Once paid, the new plan starts counting immediately and the old expiry date
+ * no longer applies. Downgrades are refused.
+ */
+export function upgradePlan(id: string, promotionPlanId: string, paymentMethod: ListingPaymentMethod): Promise<ListingCheckout> {
+  return api.post<ListingCheckout>(`/listings/${id}/upgrade`, { promotionPlanId, paymentMethod });
+}
+
+/** Sends a fixed, rejected edit of a live ad back for review - free, its plan keeps running. */
+export function resubmit(id: string): Promise<Listing> {
+  return api.post<Listing>(`/listings/${id}/resubmit`);
+}
+
+/** Deletes a Draft (including rejected), PendingReview or Expired ad for good. A paid plan isn't refunded. */
+export function deleteListing(id: string): Promise<void> {
+  return api.del<void>(`/listings/${id}`);
+}
+
 export function getDetail(id: string): Promise<ListingDetail> {
   return api.get<ListingDetail>(`/listings/${id}`);
 }

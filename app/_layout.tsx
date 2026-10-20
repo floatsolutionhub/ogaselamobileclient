@@ -119,6 +119,14 @@ export default function RootLayout() {
                   options={{ presentation: "card" }}
                 />
                 <Stack.Screen
+                  name="blocked-users"
+                  options={{ presentation: "card" }}
+                />
+                <Stack.Screen
+                  name="delete-account"
+                  options={{ presentation: "card" }}
+                />
+                <Stack.Screen
                   name="choose-plan"
                   options={{ presentation: "card" }}
                 />

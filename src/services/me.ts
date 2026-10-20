@@ -8,6 +8,11 @@ export function getCurrentUser(): Promise<CurrentUser> {
   return api.get<CurrentUser>("/me");
 }
 
+/** Permanent and immediate: ads come down, personal data is erased, every session is revoked. Sign out locally afterwards. */
+export function deleteMyAccount(): Promise<void> {
+  return api.del<void>("/me");
+}
+
 /** Only the name is edited directly - phone, email and business info go through change requests (staff approval). */
 export function updateProfile(input: { name: string }): Promise<void> {
   return api.patch<void>("/me/profile", input);

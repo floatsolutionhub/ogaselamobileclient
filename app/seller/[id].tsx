@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BlockedSellerNotice } from "@/components/BlockedSellerNotice";
 import { ListingCard } from "@/components/ListingCard";
 import { VerifiedBusinessPill } from "@/components/VerifiedBusinessPill";
 import { ApiError } from "@/lib/apiClient";
@@ -35,6 +36,8 @@ export default function SellerProfileScreen() {
   const [ads, setAds] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bumped after unblocking so the storefront reloads with the seller's ads.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -66,7 +69,7 @@ export default function SellerProfileScreen() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, reloadKey]);
 
   const header = profile ? (
     <View className="mb-4 rounded-3xl border border-brand-50 bg-white p-5">
@@ -111,9 +114,7 @@ export default function SellerProfileScreen() {
           </View>
         </View>
         <View className="flex-1 rounded-2xl bg-surface px-3 py-2.5">
-          <Text className="font-poppins text-micro text-ink-500">
-            Live ads
-          </Text>
+          <Text className="font-poppins text-micro text-ink-500">Live ads</Text>
           <Text className="mt-0.5 font-poppins-semibold text-body text-ink-900">
             {profile.activeAdCount}
           </Text>
@@ -122,16 +123,29 @@ export default function SellerProfileScreen() {
 
       {profile.storeAddress ? (
         <View className="mt-3 flex-row items-start gap-2">
-          <MapPin size={ICON.sm} color={colors.ink500} style={{ marginTop: 2 }} />
+          <MapPin
+            size={ICON.sm}
+            color={colors.ink500}
+            style={{ marginTop: 2 }}
+          />
           <Text className="flex-1 font-poppins text-body text-ink-700">
             {profile.storeAddress}
           </Text>
         </View>
       ) : null}
 
-      <Text className="mt-5 font-poppins-semibold text-subtitle text-ink-900">
-        Ads from this seller
-      </Text>
+      {profile.isBlockedByMe ? (
+        <View className="mt-5">
+          <BlockedSellerNotice
+            userId={profile.userId}
+            onUnblocked={() => setReloadKey((k) => k + 1)}
+          />
+        </View>
+      ) : (
+        <Text className="mt-5 font-poppins-semibold text-subtitle text-ink-900">
+          Ads from this seller
+        </Text>
+      )}
     </View>
   ) : null;
 
@@ -147,7 +161,9 @@ export default function SellerProfileScreen() {
         >
           <ChevronLeft size={ICON.lg} color={colors.ink700} />
         </Pressable>
-        <Text className="font-poppins-bold text-heading text-ink-900">Seller</Text>
+        <Text className="font-poppins-bold text-heading text-ink-900">
+          Seller
+        </Text>
       </View>
 
       {loading ? (
@@ -168,9 +184,11 @@ export default function SellerProfileScreen() {
             <ListingCard listing={item} variant="grid" />
           )}
           ListEmptyComponent={
-            <Text className="text-center font-poppins text-body text-ink-500">
-              No live ads right now.
-            </Text>
+            profile.isBlockedByMe ? null : (
+              <Text className="text-center font-poppins text-body text-ink-500">
+                No live ads right now.
+              </Text>
+            )
           }
         />
       )}

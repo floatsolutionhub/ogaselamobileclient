@@ -8,7 +8,7 @@ import { useFavourites } from "@/context/FavouritesContext";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import * as listingsService from "@/services/listings";
 import { colors } from "@/theme/colors";
-import { Listing, SearchResultItem } from "@/types/api";
+import { Listing, ListingDetail, SearchResultItem } from "@/types/api";
 
 /** Maps a full Listing (from getById) into the SearchResultItem shape ListingCard expects,
  * since there's no batch "get listings by ids" endpoint to source real SearchResultItems from. */
@@ -42,13 +42,15 @@ export default function FavouritesScreen() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    Promise.allSettled(favouriteIds.map((id) => listingsService.getById(id)))
+    Promise.allSettled(favouriteIds.map((id) => listingsService.getDetail(id)))
       .then((results) => {
         if (!active) return;
         const fulfilled = results
           .filter(
-            (result): result is PromiseFulfilledResult<Listing> => result.status === "fulfilled"
+            (result): result is PromiseFulfilledResult<ListingDetail> => result.status === "fulfilled"
           )
+          // Saved ads from a seller you've since blocked stay hidden.
+          .filter((result) => !result.value.seller.isBlockedByMe)
           .map((result) => toSearchResultItem(result.value));
         setListings(fulfilled);
       })

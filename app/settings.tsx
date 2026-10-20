@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import {
+  Ban,
   Bell,
   Briefcase,
   ChevronLeft,
@@ -26,6 +27,7 @@ const ROUTES = {
   "change-email": "/change-contact?type=email",
   "update-password": "/update-password",
   "manage-notifications": "/notification-settings",
+  "blocked-users": "/blocked-users",
 } as const;
 
 type SettingsItem = {
@@ -87,6 +89,17 @@ const SECTIONS: { title: string; items: SettingsItem[] }[] = [
         icon: Bell,
         label: "Manage Notifications",
         description: "Choose what we notify you about",
+      },
+    ],
+  },
+  {
+    title: "Privacy",
+    items: [
+      {
+        key: "blocked-users",
+        icon: Ban,
+        label: "Blocked Users",
+        description: "People who can't message you",
       },
     ],
   },

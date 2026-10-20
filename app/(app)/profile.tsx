@@ -7,8 +7,10 @@ import {
   HelpCircle,
   LogOut,
   Mail,
+  MapPin,
   Phone,
   Shield,
+  ShieldCheck,
   Trash2,
   Settings2Icon,
   Scale,
@@ -46,6 +48,8 @@ const MENU_ITEMS = [
   { icon: Shield, label: "Terms & Conditions" },
   { icon: PackageCheck, label: "Office pickups" },
   { icon: Scale, label: "Disputes" },
+  { icon: MapPin, label: "Our offices" },
+  { icon: ShieldCheck, label: "Trust & safety" },
   { icon: HelpCircle, label: "Help & support" },
   { icon: Settings2Icon, label: "Settings" },
 ];
@@ -88,6 +92,14 @@ export default function ProfileScreen() {
     }
     if (label === "Terms & Conditions") {
       WebBrowser.openBrowserAsync(LINKS.terms);
+      return;
+    }
+    if (label === "Our offices") {
+      WebBrowser.openBrowserAsync(LINKS.locateUs);
+      return;
+    }
+    if (label === "Trust & safety") {
+      WebBrowser.openBrowserAsync(LINKS.trustAndSafety);
       return;
     }
     if (label === "Help & support") {
@@ -202,13 +214,13 @@ export default function ProfileScreen() {
         </Text>
 
         <Pressable
-          onPress={() => WebBrowser.openBrowserAsync(LINKS.accountDeletion)}
-          accessibilityRole="link"
+          onPress={() => router.push("/delete-account")}
+          accessibilityRole="button"
           className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl border border-ink-300/40 bg-white py-4"
         >
           <Trash2 size={ICON.md} color={colors.ink700} />
           <Text className="font-poppins-semibold text-body text-ink-700">
-            Delete My Data
+            Delete Account
           </Text>
         </Pressable>
 

@@ -1,5 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
+  ArrowUpCircle,
   Check,
   ChevronLeft,
   Clock,
@@ -9,6 +10,7 @@ import {
   // Wallet as WalletIcon,
   type LucideIcon,
 } from "lucide-react-native";
+import moment from "moment";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,6 +33,7 @@ import { getPromotionPlans } from "@/services/promotionPlans";
 import { colors } from "@/theme/colors";
 import type { Listing, PromotionPlan } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { canUpgrade } from "@/utils/listingLifecycle";
 import { openCheckout } from "@/utils/payments";
 import { ICON } from "@/theme/typography";
 
@@ -59,6 +62,14 @@ function checkoutErrorMessage(error: unknown): { title: string; body: string } {
       return { title: "The free plan isn't available here", body: "Ads in this category need a paid plan." };
     case "Listing.FreePlanCapReached":
       return { title: "You've used all your free ads", body: "Choose a paid plan, or wait for one of your free ads to end." };
+    case "Listing.ResubmitInstead":
+      return { title: "Nothing to pay", body: "This ad's plan is still running. Fix it and resubmit it from My ads." };
+    case "Listing.PlanDowngradeNotAllowed":
+      return { title: "Plans can only go up", body: "A running plan can only be upgraded. Choose a plan that costs the same or more." };
+    case "Listing.SamePlan":
+      return { title: "Already on this plan", body: "Choose a bigger plan to upgrade." };
+    case "Listing.NotLive":
+      return { title: "Can't change plan", body: "Only ads that are live, or being reviewed after an edit, can change plan." };
     // Wallet disabled for now - only reachable when paying from the wallet.
     // case "Payment.InsufficientBalance":
     //   return { title: "Not enough in your wallet", body: "Pay by card instead, or top up your wallet." };
@@ -67,9 +78,22 @@ function checkoutErrorMessage(error: unknown): { title: string; body: string } {
   }
 }
 
+/** new: a draft's first submission. renew: an expired ad. upgrade: a bigger plan for an ad whose plan is running. */
+type Mode = "new" | "renew" | "upgrade";
+
+function modeOf(listing: Listing): Mode | null {
+  if (canUpgrade(listing)) return "upgrade";
+  if (listing.status === "Expired") return "renew";
+  if (listing.status === "Draft") return "new";
+  return null;
+}
+
 /**
- * Checkout for a draft ad (step 4 of posting): pick a promotion plan, pay, and only once the
- * payment is confirmed is the ad submitted for review. Until then it stays a draft in My Ads.
+ * Paying for an ad's plan. For a draft (step 4 of posting): pick a promotion plan, pay, and only
+ * once the payment is confirmed is the ad submitted for review - until then it stays a draft in My
+ * Ads. An expired ad is renewed the same way, for a fresh plan period. An ad whose plan is running
+ * can only be upgraded: plans costing the same or more, at full price; the new plan starts counting
+ * once paid and the old expiry date no longer applies.
  * Card payments open the gateway's page; when it closes we ask the API to confirm with the
  * gateway (retrying briefly), and the gateway's webhook settles it later if the bank is slow.
  */
@@ -80,6 +104,8 @@ export default function ChoosePlanScreen() {
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [plans, setPlans] = useState<PromotionPlan[]>([]);
+  /** Upgrades: the plan the ad is on now. */
+  const [currentPlan, setCurrentPlan] = useState<PromotionPlan | null>(null);
   // Wallet disabled for now: no balance is loaded or shown, and every paid plan goes through the card checkout.
   // const [balanceKobo, setBalanceKobo] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -110,9 +136,20 @@ export default function ChoosePlanScreen() {
           const [ad, allPlans] = await Promise.all([listingsService.getById(listingId), getPromotionPlans()]);
           if (cancelled) return;
           const onSale = allPlans.filter((p) => p.isActive);
+          const current = allPlans.find((p) => p.id === ad.promotionPlanId) ?? null;
+          const upgrading = modeOf(ad) === "upgrade";
+          // Never a downgrade: paid plans at least as dear as the current one.
+          const offered = upgrading
+            ? onSale.filter((p) => p.price > 0 && p.id !== current?.id && p.price >= (current?.price ?? 0))
+            : onSale;
           setListing(ad);
-          setPlans(onSale);
-          setSelectedId((current) => current ?? ad.promotionPlanId ?? onSale[0]?.id ?? null);
+          setCurrentPlan(current);
+          setPlans(offered);
+          setSelectedId((selectedNow) =>
+            selectedNow && offered.some((p) => p.id === selectedNow)
+              ? selectedNow
+              : (!upgrading && offered.some((p) => p.id === ad.promotionPlanId) ? ad.promotionPlanId : offered[0]?.id) ?? null,
+          );
         } catch {
           if (!cancelled) setListing(null);
         } finally {
@@ -126,6 +163,10 @@ export default function ChoosePlanScreen() {
     }, [listingId, loadWallet]),
   );
 
+  const mode = listing ? modeOf(listing) : null;
+  const upgrading = mode === "upgrade";
+  /** Where the ad lives in My Ads while it isn't paid for. */
+  const savedNote = upgrading ? "Your ad stays on its current plan" : "Your ad is saved in My Ads";
   const selected = useMemo(() => plans.find((p) => p.id === selectedId) ?? null, [plans, selectedId]);
   const isFree = selected?.price === 0;
   const photoCount = listing?.mediaUrls.length ?? 0;
@@ -136,6 +177,18 @@ export default function ChoosePlanScreen() {
 
   const finish = (result: ListingCheckout) => {
     const underReview = result.listing.status === "PendingReview";
+    if (upgrading) {
+      Toast.show({
+        type: "success",
+        text1: "Plan upgraded",
+        text2: result.listing.expiresAt
+          ? `Your new plan started today and runs until ${moment(result.listing.expiresAt).format("D MMM YYYY")}.`
+          : undefined,
+      });
+      const tab = underReview ? "pending" : result.listing.status === "Draft" ? "rejected" : "active";
+      router.replace({ pathname: "/my-ads", params: { tab } });
+      return;
+    }
     Toast.show({
       type: "success",
       text1: underReview ? "Paid - your ad is under review" : "Your ad is live",
@@ -160,7 +213,7 @@ export default function ChoosePlanScreen() {
           Toast.show({
             type: "error",
             text1: "Payment wasn't completed",
-            text2: "Your ad is saved as a draft - you can pay any time.",
+            text2: `${savedNote}. You can try again any time.`,
           });
           loadWallet();
           return;
@@ -192,7 +245,7 @@ export default function ChoosePlanScreen() {
         Toast.show({
           type: "info",
           text1: "Payment cancelled",
-          text2: "Nothing was charged. Your ad is saved as a draft - pay whenever you're ready.",
+          text2: `Nothing was charged. ${savedNote}.`,
         });
       }
     } catch {
@@ -206,7 +259,9 @@ export default function ChoosePlanScreen() {
     if (!listing || !selected) return;
     setPaying(isFree ? "Submitting your ad..." : "Starting payment...");
     try {
-      const result = await listingsService.checkout(listing.id, selected.id, effectiveMethod);
+      const result = upgrading
+        ? await listingsService.upgradePlan(listing.id, selected.id, effectiveMethod)
+        : await listingsService.checkout(listing.id, selected.id, effectiveMethod);
       if (result.outcome === "Submitted") {
         finish(result);
         return;
@@ -233,7 +288,9 @@ export default function ChoosePlanScreen() {
     ? "Choose a plan"
     : isFree
       ? "Submit for review - free"
-      : `Pay ${fromKobo(selected.price)}`;
+      : upgrading
+        ? `Pay ${fromKobo(selected.price)} and upgrade`
+        : `Pay ${fromKobo(selected.price)}`;
   // Wallet disabled for now: was `Pay ${fromKobo(selected.price)}${effectiveMethod === "Wallet" ? " from wallet" : ""}`
 
   return (
@@ -250,7 +307,9 @@ export default function ChoosePlanScreen() {
             <ChevronLeft size={ICON.lg} color={colors.ink700} />
           </Pressable>
           <View className="flex-1">
-            <Text className="font-poppins-bold text-display text-ink-900">Promote & pay</Text>
+            <Text className="font-poppins-bold text-display text-ink-900">
+              {upgrading ? "Upgrade your plan" : mode === "renew" ? "Renew your ad" : "Promote & pay"}
+            </Text>
             {listing ? (
               <Text className="font-poppins text-caption text-ink-500" numberOfLines={1}>
                 for “{listing.title}”
@@ -265,13 +324,15 @@ export default function ChoosePlanScreen() {
         <ActivityIndicator color={colors.brand600} style={{ marginTop: 40 }} />
       ) : !listing ? (
         <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">This ad could not be found.</Text>
-      ) : listing.status !== "Draft" ? (
+      ) : mode === null ? (
         <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">
           This ad has already been paid for and submitted.
         </Text>
       ) : plans.length === 0 ? (
         <Text className="px-6 pt-6 text-center font-poppins text-body text-ink-500">
-          No plans are available right now. Your ad is saved as a draft - try again later.
+          {upgrading
+            ? `Your ad is already on our top plan${currentPlan ? ` (${currentPlan.name})` : ""}.`
+            : "No plans are available right now. Your ad is saved in My Ads. Try again later."}
         </Text>
       ) : (
         <>
@@ -282,8 +343,11 @@ export default function ChoosePlanScreen() {
                 <View className="flex-1">
                   <Text className="font-poppins-semibold text-body text-gold-700">Confirming your payment</Text>
                   <Text className="mt-0.5 font-poppins text-caption text-ink-700">
-                    Your bank hasn&apos;t confirmed it yet. We&apos;ll submit your ad for review automatically once it does -
-                    you don&apos;t need to pay again.
+                    Your bank hasn&apos;t confirmed it yet.{" "}
+                    {upgrading
+                      ? "We'll move your ad to its new plan automatically once it does."
+                      : "We'll submit your ad for review automatically once it does."}{" "}
+                    You don&apos;t need to pay again.
                   </Text>
                   <Pressable onPress={() => confirm(pendingReference)} disabled={!!paying} className="mt-2 self-start">
                     <Text className="font-poppins-semibold text-caption text-brand-700">Check again</Text>
@@ -292,14 +356,33 @@ export default function ChoosePlanScreen() {
               </View>
             ) : null}
 
-            {listing.reviewNote ? (
+            {upgrading && currentPlan ? (
+              <View className="flex-row gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-4">
+                <ArrowUpCircle size={ICON.md} color={colors.brand600} />
+                <View className="flex-1">
+                  <Text className="font-poppins-semibold text-body text-ink-900">
+                    You&apos;re on the {currentPlan.name} plan
+                    {listing.expiresAt ? ` until ${moment(listing.expiresAt).format("D MMM YYYY")}` : ""}
+                  </Text>
+                  <Text className="mt-0.5 font-poppins text-caption text-ink-700">
+                    An upgrade costs the new plan&apos;s full price. It starts the moment your payment is confirmed and runs
+                    for its full length from then, so your current end date no longer applies. No new review is needed for a
+                    plan change.
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
+            {mode === "new" && listing.reviewNote ? (
               <View className="rounded-2xl border border-danger/20 bg-danger/5 p-4">
                 <Text className="font-poppins-semibold text-body text-danger">Last submission wasn&apos;t approved</Text>
                 <Text className="mt-0.5 font-poppins text-caption text-ink-700">{listing.reviewNote}</Text>
               </View>
             ) : null}
 
-            <Text className="font-poppins-semibold text-subtitle text-ink-900">1. Choose a promotion plan</Text>
+            <Text className="font-poppins-semibold text-subtitle text-ink-900">
+              1. Choose {upgrading ? "your new plan" : "a promotion plan"}
+            </Text>
             {plans.map((plan) => {
               const isSelected = plan.id === selectedId;
               return (
@@ -397,8 +480,9 @@ export default function ChoosePlanScreen() {
             ) : null}
 
             <Text className="mt-2 font-poppins text-caption text-ink-500">
-              Once {isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review
-              before buyers can see it.
+              {upgrading
+                ? "Once your payment is confirmed, your ad moves to the new plan straight away."
+                : `Once ${isFree ? "submitted" : "your payment is confirmed"}, your ad goes to our team for a quick review before buyers can see it.`}
               {/* Wallet disabled for now: " If it isn't approved, a paid plan is refunded to your wallet." */}
             </Text>
           </ScrollView>
@@ -414,10 +498,17 @@ export default function ChoosePlanScreen() {
               disabled={!selected || !!pendingReference}
             />
             <Pressable
-              onPress={() => router.replace({ pathname: "/my-ads", params: { tab: "draft" } })}
+              onPress={() =>
+                router.replace({
+                  pathname: "/my-ads",
+                  params: { tab: upgrading ? "active" : mode === "renew" ? "expired" : "draft" },
+                })
+              }
               className="items-center py-2"
             >
-              <Text className="font-poppins-medium text-body text-ink-500">Save as draft for now</Text>
+              <Text className="font-poppins-medium text-body text-ink-500">
+                {mode === "new" ? "Save as draft for now" : "Back to My Ads"}
+              </Text>
             </Pressable>
           </View>
         </>

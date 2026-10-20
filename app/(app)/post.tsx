@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
+  AlertCircle,
   Camera,
   Check,
   ChevronLeft,
@@ -39,6 +40,7 @@ import { getPromotionPlans } from "@/services/promotionPlans";
 import { colors } from "@/theme/colors";
 import { ListingCondition } from "@/types/api";
 import { formatNaira } from "@/utils/currency";
+import { editMode, type EditMode } from "@/utils/listingLifecycle";
 import { prepareListingPhoto } from "@/utils/photos";
 import {
   isPlatformLink,
@@ -124,6 +126,11 @@ type Suggestion =
  * Continue and whenever the seller leaves this screen, so closing midway never loses it - it's in
  * My Ads → Drafts, and opening it there resumes here. It only stops being a Draft once its plan
  * is paid for at checkout, which submits it for review.
+ *
+ * The same steps edit an existing ad (see EditMode): a live ad is never saved halfway - its changes
+ * go to review only when submitted at the end, and its plan (so its photo limit) can't change here -
+ * and a rejected edit of one is resubmitted for free. An expired ad is saved like a draft and goes
+ * on to checkout to be renewed.
  */
 export default function PostScreen() {
   useProtectedRoute("/(app)/post");
@@ -142,8 +149,22 @@ export default function PostScreen() {
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   /** Photo limits across the active plans: the most a seller can add, and the fewest any plan keeps. */
   const [photoLimits, setPhotoLimits] = useState({ max: FALLBACK_MAX_PHOTOS, min: FALLBACK_MAX_PHOTOS });
-  const MAX_PHOTOS = photoLimits.max;
+  const [planPhotoLimits, setPlanPhotoLimits] = useState<Record<string, number>>({});
   const [listingId, setListingId] = useState<string | null>(null);
+  /** What kind of edit this is - "new" for a fresh ad or an ordinary draft. */
+  const [mode, setMode] = useState<EditMode>("new");
+  /** An existing ad's own plan, place and moderator note (its location isn't re-read from the picker). */
+  const [existing, setExisting] = useState<{
+    planId: string | null;
+    location: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    reviewNote: string | null;
+  } | null>(null);
+  const resubmits = mode === "live" || mode === "fix";
+  // A running plan can't change in an edit, so its photo limit is the limit.
+  const lockedLimit = resubmits && existing?.planId ? planPhotoLimits[existing.planId] : undefined;
+  const MAX_PHOTOS = lockedLimit ?? photoLimits.max;
   const [busy, setBusy] = useState<string | null>(null);
   // A draft opened from My Ads that hasn't loaded into the form yet.
   const resuming = !!params.listingId && params.listingId !== listingId;
@@ -159,6 +180,7 @@ export default function PostScreen() {
     getPromotionPlans()
       .then((plans) => {
         const limits = plans.filter((p) => p.isActive && p.photoLimit > 0).map((p) => p.photoLimit);
+        if (!cancelled) setPlanPhotoLimits(Object.fromEntries(plans.map((p) => [p.id, p.photoLimit])));
         if (!cancelled && limits.length > 0) {
           setPhotoLimits({ max: Math.max(...limits), min: Math.min(...limits) });
         }
@@ -186,6 +208,8 @@ export default function PostScreen() {
     setErrors({});
     setStep(0);
     setListingId(null);
+    setMode("new");
+    setExisting(null);
     askedFor.current = {};
   };
 
@@ -199,6 +223,24 @@ export default function PostScreen() {
       .getById(id)
       .then((ad) => {
         if (cancelled) return;
+        const adMode = editMode(ad);
+        if (!adMode) {
+          Toast.show({ type: "info", text1: "This ad can't be edited right now", text2: "Ads waiting for review, sold or paused can't be changed." });
+          router.setParams({ listingId: undefined });
+          return;
+        }
+        setMode(adMode);
+        setExisting(
+          adMode === "new"
+            ? null
+            : {
+                planId: ad.promotionPlanId,
+                location: ad.location,
+                latitude: ad.latitude,
+                longitude: ad.longitude,
+                reviewNote: ad.reviewNote ?? null,
+              },
+        );
         // The ad is filed under a subcategory or directly under a top-level category.
         const parent = tree.find((c) => c.id === ad.categoryId || c.children.some((x) => x.id === ad.categoryId));
         setValues({
@@ -260,9 +302,7 @@ export default function PostScreen() {
    * still be empty - the API only insists on completeness at checkout. Only uploaded photos are
    * saved; picked-but-not-uploaded ones go up when leaving the photos step.
    */
-  const saveDraft = async (v: Values, list: PickedPhoto[], id: string | null): Promise<string | null> => {
-    if (!v.title.trim() || !v.categoryId) return id;
-    const input: listingsService.ListingInput = {
+  const toInput = (v: Values, list: PickedPhoto[]): listingsService.ListingInput => ({
       title: v.title.trim(),
       description: v.description.trim(),
       categoryId: v.subcategoryId || v.categoryId,
@@ -270,10 +310,10 @@ export default function PostScreen() {
       condition: (v.condition || "Used") as ListingCondition,
       mediaUrls: list.filter((p) => p.url).map((p) => p.url!),
       promotionPlanId: null,
-      // "All of Nigeria" isn't a place - save the ad without a location instead.
-      location: isNationwide ? null : locationLabel,
-      latitude: null,
-      longitude: null,
+      // An existing ad keeps its place. "All of Nigeria" isn't a place - save the ad without a location instead.
+      ...(existing
+        ? { location: existing.location, latitude: existing.latitude, longitude: existing.longitude }
+        : { location: isNationwide ? null : locationLabel, latitude: null, longitude: null }),
       hasOriginalReceipt: v.condition === "Used" ? v.hasReceipt : null,
       // A half-typed link is left out rather than failing the whole draft save; Continue flags it.
       ...Object.fromEntries(
@@ -282,7 +322,13 @@ export default function PostScreen() {
           return [LINK_FIELD[key], url && isPlatformLink(key, url) ? url : null];
         }),
       ),
-    };
+  });
+
+  const saveDraft = async (v: Values, list: PickedPhoto[], id: string | null): Promise<string | null> => {
+    if (!v.title.trim() || !v.categoryId) return id;
+    // A live ad is only saved by submitting its changes - saving it would send it to review.
+    if (mode === "live") return id;
+    const input = toInput(v, list);
     if (id) {
       await listingsService.update(id, input);
       return id;
@@ -463,9 +509,30 @@ export default function PostScreen() {
   const next = async () => {
     if (!(await validateStep())) return;
 
-    setBusy(current.key === "photos" ? "Uploading photos..." : "Saving your draft...");
+    setBusy(current.key === "photos" ? "Uploading photos..." : resubmits ? "Saving..." : "Saving your draft...");
     try {
       const list = current.key === "photos" ? await uploadPhotos(photos) : photos;
+
+      if (resubmits && step === STEPS.length - 1 && listingId) {
+        // The end of an edit of a live ad (or a rejected edit): off to review, not to payment.
+        setBusy("Submitting your changes...");
+        let updated = await listingsService.update(listingId, toInput(values, list));
+        if (mode === "fix") updated = await listingsService.resubmit(listingId);
+        const underReview = updated.status === "PendingReview";
+        Toast.show({
+          type: "success",
+          text1: underReview ? "Sent for review" : "Changes saved",
+          text2: underReview
+            ? "Your ad will be back on sale as soon as our team approves the changes."
+            : "Your ad is live with the changes.",
+        });
+        handedOff.current = true;
+        reset();
+        router.setParams({ listingId: undefined });
+        router.push({ pathname: "/my-ads", params: { tab: underReview ? "pending" : "active" } });
+        return;
+      }
+
       const id = await saveDraft(values, list, listingId);
 
       if (step < STEPS.length - 1) {
@@ -509,16 +576,22 @@ export default function PostScreen() {
     <GradientScreen scroll={false}>
       <View className="px-6 pt-6">
         <Text className="font-poppins-bold text-display text-ink-900">
-          {listingId ? "Edit your ad" : "Post an ad"}
+          {mode === "renew" ? "Renew your ad" : listingId ? "Edit your ad" : "Post an ad"}
         </Text>
         <Text className="mt-1 font-poppins text-body text-ink-500">
-          {listingId
+          {mode === "live"
+            ? "Make your changes, then submit them for review."
+            : mode === "fix"
+              ? "Fix what our team flagged, then resubmit it. There's nothing to pay."
+              : mode === "renew"
+                ? "Freshen it up if you like, then choose a plan to put it back on sale."
+                : listingId
             ? "Saved as a draft - finish it any time from My Ads."
             : isNationwide
               ? "Reach genuine buyers across Nigeria"
               : `Reach genuine buyers near ${locationLabel}`}
         </Text>
-        <PostStepProgress current={step} />
+        <PostStepProgress current={step} finalLabel={resubmits ? "Review" : undefined} />
       </View>
 
       <ScrollView
@@ -526,6 +599,26 @@ export default function PostScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
       >
+        {mode === "live" ? (
+          <View className="mb-5 flex-row gap-2 rounded-2xl border border-gold-50 bg-gold-50 p-4">
+            <AlertCircle size={ICON.sm} color={colors.gold700} style={{ marginTop: 2 }} />
+            <Text className="flex-1 font-poppins text-caption text-ink-700">
+              <Text className="font-poppins-semibold text-gold-700">This ad is live. </Text>
+              Nothing changes until you submit at the end. Once you do, our team reviews the changes, and the ad is off
+              the market until they approve them. Your plan and its end date stay the same. To change plan, use Upgrade
+              plan in My Ads.
+            </Text>
+          </View>
+        ) : null}
+        {existing?.reviewNote ? (
+          <View className="mb-5 flex-row gap-2 rounded-2xl bg-danger/5 p-4">
+            <AlertCircle size={ICON.sm} color={colors.danger} style={{ marginTop: 2 }} />
+            <Text className="flex-1 font-poppins text-caption text-ink-700">
+              <Text className="font-poppins-semibold text-danger">Not approved: </Text>
+              {existing.reviewNote}
+            </Text>
+          </View>
+        ) : null}
         {verification && !canSell ? (
           <View className="mb-5">
             <VerificationBadge
@@ -772,7 +865,17 @@ export default function PostScreen() {
         ) : null}
         <View className="flex-1">
           <PrimaryButton
-            label={step === STEPS.length - 1 ? "Continue to promote & pay" : "Continue"}
+            label={
+              step < STEPS.length - 1
+                ? "Continue"
+                : mode === "live"
+                  ? "Submit changes for review"
+                  : mode === "fix"
+                    ? "Resubmit for review"
+                    : mode === "renew"
+                      ? "Continue to renew"
+                      : "Continue to promote & pay"
+            }
             loading={!!busy}
             disabled={!canSell}
             onPress={next}

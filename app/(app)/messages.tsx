@@ -158,6 +158,15 @@ export default function MessagesScreen() {
                     : "You're the seller"}{" "}
                   in this chat
                 </Text>
+                {item.isOtherParticipantDeleted ? (
+                  <Text className="mt-1 font-poppins-medium text-caption text-ink-500">
+                    Account deleted
+                  </Text>
+                ) : item.isBlockedByMe ? (
+                  <Text className="mt-1 font-poppins-medium text-caption text-danger">
+                    Blocked
+                  </Text>
+                ) : null}
               </View>
             </Pressable>
           )}

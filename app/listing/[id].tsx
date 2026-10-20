@@ -35,6 +35,7 @@ import Toast from "react-native-toast-message";
 
 import { ListingCard } from "@/components/ListingCard";
 import { OfficePickupSheet } from "@/components/OfficePickupSheet";
+import { BlockedSellerNotice } from "@/components/BlockedSellerNotice";
 import { ReportSheet } from "@/components/ReportSheet";
 import { VerifiedBusinessPill } from "@/components/VerifiedBusinessPill";
 import { YouTubePlayer } from "@/components/YouTubePlayer";
@@ -217,7 +218,11 @@ export default function ListingDetailScreen() {
       const conversation = await messagingService.startConversation(listing.id);
       router.push({
         pathname: "/(modals)/conversation",
-        params: { conversationId: conversation.id, title: listing.title, listingId: listing.id },
+        params: {
+          conversationId: conversation.id,
+          title: listing.title,
+          listingId: listing.id,
+        },
       });
     } catch (err) {
       Toast.show({
@@ -322,7 +327,9 @@ export default function ListingDetailScreen() {
   const favourited = isFavourite(listing.id);
   const storeAddress = listing.seller.storeAddress ?? listing.location;
   // A YouTube video plays right on the ad; any other link opens in its app (or the browser).
-  const videoId = listing.youTubeUrl ? youTubeVideoId(listing.youTubeUrl) : null;
+  const videoId = listing.youTubeUrl
+    ? youTubeVideoId(listing.youTubeUrl)
+    : null;
   const linkByPlatform = {
     youtube: videoId ? null : listing.youTubeUrl,
     tiktok: listing.tikTokUrl,
@@ -379,7 +386,19 @@ export default function ListingDetailScreen() {
             </Text>
           </View>
 
-          {!isOwnListing ? (
+          {!isOwnListing && listing.seller.isBlockedByMe ? (
+            <View className="mt-5">
+              <BlockedSellerNotice
+                userId={listing.seller.userId}
+                onUnblocked={() =>
+                  setListing({
+                    ...listing,
+                    seller: { ...listing.seller, isBlockedByMe: false },
+                  })
+                }
+              />
+            </View>
+          ) : !isOwnListing ? (
             <View className="mt-5 gap-3">
               <Pressable
                 onPress={handleMessage}
@@ -433,7 +452,8 @@ export default function ListingDetailScreen() {
             />
           </View>
 
-          {listing.condition === "Used" && listing.hasOriginalReceipt != null ? (
+          {listing.condition === "Used" &&
+          listing.hasOriginalReceipt != null ? (
             <View
               className={`mt-3 flex-row items-center gap-2 self-start rounded-full px-3 py-1.5 ${
                 listing.hasOriginalReceipt ? "bg-brand-50" : "bg-surface"
@@ -441,7 +461,9 @@ export default function ListingDetailScreen() {
             >
               <ReceiptText
                 size={ICON.sm}
-                color={listing.hasOriginalReceipt ? colors.brand600 : colors.ink500}
+                color={
+                  listing.hasOriginalReceipt ? colors.brand600 : colors.ink500
+                }
               />
               <Text
                 className={`font-poppins-medium text-caption ${
@@ -699,7 +721,9 @@ function ReportButton({
       className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-danger/30 bg-danger/5 py-3"
     >
       <Icon size={ICON.sm} color={colors.danger} />
-      <Text className="font-poppins-semibold text-body text-danger">{label}</Text>
+      <Text className="font-poppins-semibold text-body text-danger">
+        {label}
+      </Text>
     </Pressable>
   );
 }

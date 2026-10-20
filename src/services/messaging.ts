@@ -1,6 +1,6 @@
 // ConversationsController.cs, UsersController.cs, ReportsController.cs (all under Messaging/Moderation) - one function per route.
 import { api } from "@/lib/apiClient";
-import type { Conversation, Message, PagedResult } from "@/types/api";
+import type { BlockedUser, Conversation, Message, PagedResult } from "@/types/api";
 
 export function startConversation(listingId: string): Promise<Conversation> {
   return api.post<Conversation>("/conversations", { listingId });
@@ -8,6 +8,10 @@ export function startConversation(listingId: string): Promise<Conversation> {
 
 export function getConversations(page = 1, pageSize = 20): Promise<PagedResult<Conversation>> {
   return api.get<PagedResult<Conversation>>(`/conversations?page=${page}&pageSize=${pageSize}`);
+}
+
+export function getConversation(conversationId: string): Promise<Conversation> {
+  return api.get<Conversation>(`/conversations/${conversationId}`);
 }
 
 /** The safety caption shown above the message box - SuperAdmins edit it in the Control Portal. */
@@ -30,8 +34,18 @@ export function sendMessage(conversationId: string, content: string | null, imag
   return api.post<Message>(`/conversations/${conversationId}/messages`, { content, imageUrl });
 }
 
+/** Neither side can message the other (or start a new chat) until it's lifted with unblockUser. */
 export function blockUser(userId: string): Promise<void> {
   return api.post<void>(`/users/${userId}/block`);
+}
+
+export function unblockUser(userId: string): Promise<void> {
+  return api.del<void>(`/users/${userId}/block`);
+}
+
+/** Most recently blocked first. */
+export function getBlockedUsers(): Promise<BlockedUser[]> {
+  return api.get<BlockedUser[]>("/users/blocked");
 }
 
 export function reportUser(targetUserId: string, reason: string): Promise<void> {
